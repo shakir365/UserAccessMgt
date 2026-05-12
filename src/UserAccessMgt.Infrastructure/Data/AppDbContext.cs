@@ -15,6 +15,10 @@ public class AppDbContext : DbContext
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
     public DbSet<UserTransfer> UserTransfers => Set<UserTransfer>();
+    public DbSet<Grade> Grades => Set<Grade>();
+
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -156,6 +160,26 @@ public class AppDbContext : DbContext
                 .WithMany(u => u.TransferredByRecords)
                 .HasForeignKey(e => e.TransferredById)
                 .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<Grade>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.GradeCode).IsUnique();
+
+            entity.Property(e => e.GradeCode)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(e => e.GradeName)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(e => e.IsActive)
+                .IsRequired();
+
+            entity.Property(e => e.CreateDate)
+                .IsRequired();
         });
 
         SeedData(modelBuilder);
