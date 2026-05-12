@@ -24,7 +24,7 @@ public class AttendanceService : IAttendanceService
     }
 
     private static DateTime BangladeshNow =>
-        TimeZoneInfo.ConvertTimeFromUtc(BangladeshNow, _bdTimeZone);
+        TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _bdTimeZone);
 
     public AttendanceService(IUnitOfWork unitOfWork)
     {
