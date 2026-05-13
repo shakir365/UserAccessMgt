@@ -19,6 +19,8 @@ public class AppDbContext : DbContext
 
     public DbSet<Designation> Designations => Set<Designation>();
 
+    public DbSet<Department> Departments => Set<Department>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -192,6 +194,27 @@ public class AppDbContext : DbContext
                 .IsRequired();
 
             entity.Property(e => e.DesignationName)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(e => e.IsActive)
+                .IsRequired();
+
+            entity.Property(e => e.CreateDate)
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.DepartmentCode).IsUnique();
+
+            entity.Property(e => e.DepartmentCode)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(e => e.DepartmentName)
                 .HasMaxLength(150)
                 .IsRequired();
 

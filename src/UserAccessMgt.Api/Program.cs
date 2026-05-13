@@ -56,6 +56,7 @@ builder.Services.AddScoped<ILeaveService, LeaveService>();
 builder.Services.AddScoped<IUserTransferService, UserTransferService>();
 builder.Services.AddScoped<IGradeService, GradeService>();
 builder.Services.AddScoped<IDesignationService, DesignationService>();
+builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
 var jwtSecret = builder.Configuration["Jwt:Secret"]!;
 var key = Encoding.UTF8.GetBytes(jwtSecret);
