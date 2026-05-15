@@ -17,7 +17,9 @@ public class AppDbContext : DbContext
     public DbSet<UserTransfer> UserTransfers => Set<UserTransfer>();
     public DbSet<Grade> Grades => Set<Grade>();
 
+    public DbSet<Designation> Designations => Set<Designation>();
 
+    public DbSet<Department> Departments => Set<Department>();
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -172,6 +174,47 @@ public class AppDbContext : DbContext
                 .IsRequired();
 
             entity.Property(e => e.GradeName)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(e => e.IsActive)
+                .IsRequired();
+
+            entity.Property(e => e.CreateDate)
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<Designation>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.DesignationCode).IsUnique();
+
+            entity.Property(e => e.DesignationCode)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(e => e.DesignationName)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(e => e.IsActive)
+                .IsRequired();
+
+            entity.Property(e => e.CreateDate)
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.DepartmentCode).IsUnique();
+
+            entity.Property(e => e.DepartmentCode)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(e => e.DepartmentName)
                 .HasMaxLength(150)
                 .IsRequired();
 
