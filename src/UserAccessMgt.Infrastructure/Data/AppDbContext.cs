@@ -17,7 +17,9 @@ public class AppDbContext : DbContext
     public DbSet<UserTransfer> UserTransfers => Set<UserTransfer>();
     public DbSet<Grade> Grades => Set<Grade>();
 
-
+    public DbSet<District> District => Set<District>();
+    public DbSet<Division> Division => Set<Division>();
+    public DbSet<Thana> Thana => Set<Thana>();
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -12,8 +12,8 @@ using UserAccessMgt.Infrastructure.Data;
 namespace UserAccessMgt.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260511190542_AddAttendanceGpsLocationAndInstitute")]
-    partial class AddAttendanceGpsLocationAndInstitute
+    [Migration("20260515170915_...")]
+    partial class _
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -87,6 +87,89 @@ namespace UserAccessMgt.Infrastructure.Migrations
                     b.ToTable("Attendances");
                 });
 
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.District", b =>
+                {
+                    b.Property<int>("DistrictId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DistrictId"));
+
+                    b.Property<string>("DistrictNameBN")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("DistrictNameEN")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("DivisionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("DistrictId");
+
+                    b.HasIndex("DivisionId");
+
+                    b.ToTable("Districts");
+                });
+
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.Division", b =>
+                {
+                    b.Property<int>("DivisionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DivisionId"));
+
+                    b.Property<string>("DivisionNameBN")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("DivisionNameEN")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("DivisionId");
+
+                    b.ToTable("Divisions");
+                });
+
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.Grade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GradeCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("GradeName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GradeCode")
+                        .IsUnique();
+
+                    b.ToTable("Grades");
+                });
+
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.Institute", b =>
                 {
                     b.Property<int>("Id")
@@ -123,6 +206,9 @@ namespace UserAccessMgt.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int?>("ThanaId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -130,6 +216,8 @@ namespace UserAccessMgt.Infrastructure.Migrations
 
                     b.HasIndex("Code")
                         .IsUnique();
+
+                    b.HasIndex("ThanaId");
 
                     b.ToTable("Institutes");
                 });
@@ -313,6 +401,34 @@ namespace UserAccessMgt.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.Thana", b =>
+                {
+                    b.Property<int>("ThanaId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ThanaId"));
+
+                    b.Property<int>("DistrictId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ThanaNameBN")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ThanaNameEN")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("ThanaId");
+
+                    b.HasIndex("DistrictId");
+
+                    b.ToTable("Thanas");
+                });
+
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -450,6 +566,24 @@ namespace UserAccessMgt.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.District", b =>
+                {
+                    b.HasOne("UserAccessMgt.Domain.Entities.Division", "Division")
+                        .WithMany("Districts")
+                        .HasForeignKey("DivisionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Division");
+                });
+
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.Institute", b =>
+                {
+                    b.HasOne("UserAccessMgt.Domain.Entities.Thana", null)
+                        .WithMany("Institutes")
+                        .HasForeignKey("ThanaId");
+                });
+
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.LeaveRequest", b =>
                 {
                     b.HasOne("UserAccessMgt.Domain.Entities.User", "ApprovedBy")
@@ -488,6 +622,17 @@ namespace UserAccessMgt.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.Thana", b =>
+                {
+                    b.HasOne("UserAccessMgt.Domain.Entities.District", "District")
+                        .WithMany("Thanas")
+                        .HasForeignKey("DistrictId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("District");
                 });
 
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.User", b =>
@@ -544,6 +689,16 @@ namespace UserAccessMgt.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.District", b =>
+                {
+                    b.Navigation("Thanas");
+                });
+
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.Division", b =>
+                {
+                    b.Navigation("Districts");
+                });
+
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.Institute", b =>
                 {
                     b.Navigation("Attendances");
@@ -558,6 +713,11 @@ namespace UserAccessMgt.Infrastructure.Migrations
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.Role", b =>
                 {
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.Thana", b =>
+                {
+                    b.Navigation("Institutes");
                 });
 
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.User", b =>
