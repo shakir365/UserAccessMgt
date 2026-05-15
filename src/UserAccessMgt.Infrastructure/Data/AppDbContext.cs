@@ -16,9 +16,11 @@ public class AppDbContext : DbContext
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
     public DbSet<UserTransfer> UserTransfers => Set<UserTransfer>();
     public DbSet<Grade> Grades => Set<Grade>();
-
-
-
+    public DbSet<Designation> Designations => Set<Designation>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<Division> Division => Set<Division>();
+    public DbSet<District> District => Set<District>();
+    public DbSet<Thana> Thana => Set<Thana>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
