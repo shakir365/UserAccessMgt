@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UserAccessMgt.Api.Authorization;
 using UserAccessMgt.Application.DTOs.Designation;
 using UserAccessMgt.Application.Interfaces;
 
@@ -18,6 +19,7 @@ public class DesignationController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Create([FromBody] CreateDesignationRequest request)
     {
         var result = await _designationService.CreateAsync(request);
@@ -58,6 +60,7 @@ public class DesignationController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateDesignationRequest request)
     {
         var result = await _designationService.UpdateAsync(id, request);
@@ -69,6 +72,7 @@ public class DesignationController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _designationService.DeleteAsync(id);

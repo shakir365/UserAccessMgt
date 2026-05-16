@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UserAccessMgt.Api.Authorization;
 using UserAccessMgt.Application.DTOs.Attendance;
 using UserAccessMgt.Application.Interfaces;
 
@@ -20,11 +21,17 @@ public class AttendanceController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAttendanceRequest request)
     {
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var submittedByUserId))
+        var submittedByUserId = User.GetUserId();
+        if (!submittedByUserId.HasValue)
             return Unauthorized();
 
-        var result = await _attendanceService.CreateAsync(request, submittedByUserId);
+        if (!User.IsSuperAdmin() && !User.IsInstituteAdmin() && request.UserId != submittedByUserId.Value)
+            return Forbid();
+
+        if (!User.CanAccessInstitute(request.InstituteId))
+            return Forbid();
+
+        var result = await _attendanceService.CreateAsync(request, submittedByUserId.Value);
         if (!result.Success)
             return BadRequest(result);
         return Ok(result);
@@ -33,11 +40,15 @@ public class AttendanceController : ControllerBase
     [HttpGet("institute/{instituteId}")]
     public async Task<IActionResult> GetByInstitute(int instituteId)
     {
+        if (!User.CanAccessInstitute(instituteId))
+            return Forbid();
+
         var result = await _attendanceService.GetByInstituteAsync(instituteId);
         return Ok(result);
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _attendanceService.GetByIdAsync(id);
@@ -49,11 +60,15 @@ public class AttendanceController : ControllerBase
     [HttpGet("user/{userId}")]
     public async Task<IActionResult> GetByUser(int userId)
     {
+        if (!User.CanAccessOwnUser(userId))
+            return Forbid();
+
         var result = await _attendanceService.GetByUserAsync(userId);
         return Ok(result);
     }
 
     [HttpGet("date/{date}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> GetByDate(DateTime date)
     {
         var result = await _attendanceService.GetByDateAsync(date);
@@ -63,11 +78,15 @@ public class AttendanceController : ControllerBase
     [HttpGet("range")]
     public async Task<IActionResult> GetByUserAndDateRange([FromQuery] int userId, [FromQuery] DateTime from, [FromQuery] DateTime to)
     {
+        if (!User.CanAccessOwnUser(userId))
+            return Forbid();
+
         var result = await _attendanceService.GetByUserAndDateRangeAsync(userId, from, to);
         return Ok(result);
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateAttendanceRequest request)
     {
         var result = await _attendanceService.UpdateAsync(id, request);
@@ -77,6 +96,7 @@ public class AttendanceController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _attendanceService.DeleteAsync(id);

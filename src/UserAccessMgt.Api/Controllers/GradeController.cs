@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UserAccessMgt.Api.Authorization;
 using UserAccessMgt.Application.DTOs.Grade;
 using UserAccessMgt.Application.Interfaces;
 
@@ -18,6 +19,7 @@ public class GradeController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Create([FromBody] CreateGradeRequest request)
     {
         var result = await _gradeService.CreateAsync(request);
@@ -55,6 +57,7 @@ public class GradeController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateGradeRequest request)
     {
         var result = await _gradeService.UpdateAsync(id, request);
@@ -65,6 +68,7 @@ public class GradeController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _gradeService.DeleteAsync(id);

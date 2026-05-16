@@ -34,6 +34,7 @@ public class AuthService : IAuthService
             return ApiResponse<TokenResponse>.Fail("Account is deactivated", "ACCOUNT_DEACTIVATED");
         }
 
+        await LoadRoleAsync(user);
         var accessToken = _tokenService.GenerateAccessToken(user);
         var refreshToken = new RefreshToken
         {
@@ -80,6 +81,7 @@ public class AuthService : IAuthService
             return ApiResponse<TokenResponse>.Fail("User not found or deactivated", "USER_INVALID");
         }
 
+        await LoadRoleAsync(user);
         var newAccessToken = _tokenService.GenerateAccessToken(user);
         var newRefreshToken = new RefreshToken
         {
@@ -136,6 +138,10 @@ public class AuthService : IAuthService
 
         var defaultRole = await _unitOfWork.Repository<Role>()
             .FirstOrDefaultAsync(r => r.Name == "User");
+        if (defaultRole is null)
+        {
+            return ApiResponse<TokenResponse>.Fail("Default user role is not configured", "ROLE_NOT_CONFIGURED");
+        }
 
         var user = new User
         {
@@ -146,7 +152,8 @@ public class AuthService : IAuthService
             LastName = request.LastName,
             PhoneNumber = request.PhoneNumber,
             InstituteId = institute.Id,
-            RoleId = defaultRole?.Id ?? 1,
+            RoleId = defaultRole.Id,
+            Role = defaultRole,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
@@ -194,5 +201,11 @@ public class AuthService : IAuthService
                 FailureReason = failureReason
             });
         }
+    }
+
+    private async Task LoadRoleAsync(User user)
+    {
+        user.Role = await _unitOfWork.Repository<Role>().GetByIdAsync(user.RoleId)
+            ?? new Role { Id = user.RoleId, Name = "User" };
     }
 }

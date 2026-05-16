@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UserAccessMgt.Api.Authorization;
 using UserAccessMgt.Application.DTOs.Leave;
 using UserAccessMgt.Application.Interfaces;
 
@@ -20,6 +21,9 @@ public class LeaveController : ControllerBase
     [HttpPost("apply")]
     public async Task<IActionResult> Apply([FromBody] CreateLeaveRequest request)
     {
+        if (!User.CanAccessOwnUser(request.UserId))
+            return Forbid();
+
         var result = await _leaveService.ApplyAsync(request);
         if (!result.Success)
             return BadRequest(result);
@@ -27,19 +31,29 @@ public class LeaveController : ControllerBase
     }
 
     [HttpPut("approve/{id}")]
+    [Authorize(Roles = $"{CurrentUserExtensions.SuperAdminRole},{CurrentUserExtensions.InstituteAdminRole}")]
     public async Task<IActionResult> Approve(int id, [FromBody] ApproveLeaveRequest request)
     {
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var approverId))
+        var approverId = User.GetUserId();
+        if (!approverId.HasValue)
             return Unauthorized();
 
-        var result = await _leaveService.ApproveAsync(id, approverId, request);
+        var result = await _leaveService.ApproveAsync(
+            id,
+            approverId.Value,
+            request,
+            User.GetInstituteId(),
+            User.IsSuperAdmin());
+        if (result.ErrorCode == "FORBIDDEN")
+            return Forbid();
+
         if (!result.Success)
             return BadRequest(result);
         return Ok(result);
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _leaveService.GetByIdAsync(id);
@@ -51,11 +65,15 @@ public class LeaveController : ControllerBase
     [HttpGet("user/{userId}")]
     public async Task<IActionResult> GetByUser(int userId)
     {
+        if (!User.CanAccessOwnUser(userId))
+            return Forbid();
+
         var result = await _leaveService.GetByUserAsync(userId);
         return Ok(result);
     }
 
     [HttpGet("pending")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> GetPending()
     {
         var result = await _leaveService.GetPendingAsync();
@@ -63,6 +81,7 @@ public class LeaveController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> GetAll()
     {
         var result = await _leaveService.GetAllAsync();
