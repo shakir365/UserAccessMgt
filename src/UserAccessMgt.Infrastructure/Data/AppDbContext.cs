@@ -15,6 +15,12 @@ public class AppDbContext : DbContext
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
     public DbSet<UserTransfer> UserTransfers => Set<UserTransfer>();
+    public DbSet<Grade> Grades => Set<Grade>();
+    public DbSet<Designation> Designations => Set<Designation>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<Division> Division => Set<Division>();
+    public DbSet<District> District => Set<District>();
+    public DbSet<Thana> Thana => Set<Thana>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -156,6 +162,67 @@ public class AppDbContext : DbContext
                 .WithMany(u => u.TransferredByRecords)
                 .HasForeignKey(e => e.TransferredById)
                 .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<Grade>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.GradeCode).IsUnique();
+
+            entity.Property(e => e.GradeCode)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(e => e.GradeName)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(e => e.IsActive)
+                .IsRequired();
+
+            entity.Property(e => e.CreateDate)
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<Designation>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.DesignationCode).IsUnique();
+
+            entity.Property(e => e.DesignationCode)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(e => e.DesignationName)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(e => e.IsActive)
+                .IsRequired();
+
+            entity.Property(e => e.CreateDate)
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.DepartmentCode).IsUnique();
+
+            entity.Property(e => e.DepartmentCode)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(e => e.DepartmentName)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(e => e.IsActive)
+                .IsRequired();
+
+            entity.Property(e => e.CreateDate)
+                .IsRequired();
         });
 
         SeedData(modelBuilder);
