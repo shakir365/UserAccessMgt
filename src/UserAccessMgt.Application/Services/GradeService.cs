@@ -16,16 +16,24 @@ public class GradeService : IGradeService
 
     public async Task<ApiResponse<GradeDto>> CreateAsync(CreateGradeRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.GradeCode))
+            return ApiResponse<GradeDto>.Fail("Grade code is required", "GRADE_CODE_REQUIRED");
+
+        if (string.IsNullOrWhiteSpace(request.GradeNameEN))
+            return ApiResponse<GradeDto>.Fail("English grade name is required", "GRADE_NAME_EN_REQUIRED");
+
+        var gradeCode = request.GradeCode.Trim();
         var existing = await _unitOfWork.Repository<Grade>()
-            .FirstOrDefaultAsync(g => g.GradeCode == request.GradeCode);
+            .FirstOrDefaultAsync(g => g.GradeCode == gradeCode);
 
         if (existing is not null)
             return ApiResponse<GradeDto>.Fail("Grade code already exists", "CODE_EXISTS");
 
         var grade = new Grade
         {
-            GradeCode = request.GradeCode,
-            GradeName = request.GradeName,
+            GradeCode = gradeCode,
+            GradeNameEN = request.GradeNameEN.Trim(),
+            GradeNameBN = request.GradeNameBN.Trim(),
             IsActive = true,
             CreateDate = DateTime.UtcNow
         };
@@ -70,8 +78,16 @@ public class GradeService : IGradeService
         if (grade is null)
             return ApiResponse<GradeDto>.Fail("Grade not found", "NOT_FOUND");
 
-        if (request.GradeName is not null)
-            grade.GradeName = request.GradeName;
+        if (request.GradeNameEN is not null)
+        {
+            if (string.IsNullOrWhiteSpace(request.GradeNameEN))
+                return ApiResponse<GradeDto>.Fail("English grade name is required", "GRADE_NAME_EN_REQUIRED");
+
+            grade.GradeNameEN = request.GradeNameEN.Trim();
+        }
+
+        if (request.GradeNameBN is not null)
+            grade.GradeNameBN = request.GradeNameBN.Trim();
 
         if (request.IsActive.HasValue)
             grade.IsActive = request.IsActive.Value;
@@ -99,7 +115,8 @@ public class GradeService : IGradeService
     {
         Id = grade.Id,
         GradeCode = grade.GradeCode,
-        GradeName = grade.GradeName,
+        GradeNameEN = grade.GradeNameEN,
+        GradeNameBN = grade.GradeNameBN,
         IsActive = grade.IsActive,
         CreateDate = grade.CreateDate
     };

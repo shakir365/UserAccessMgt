@@ -99,8 +99,8 @@ public class UserTransferService : IUserTransferService
         Id = transfer.Id,
         UserId = transfer.UserId,
         UserName = transfer.User == null ? string.Empty : transfer.User.Username,
-        FromInstituteName = transfer.FromInstitute == null ? string.Empty : transfer.FromInstitute.Name,
-        ToInstituteName = transfer.ToInstitute == null ? string.Empty : transfer.ToInstitute.Name,
+        FromInstituteName = transfer.FromInstitute == null ? string.Empty : transfer.FromInstitute.InstituteNameEN,
+        ToInstituteName = transfer.ToInstitute == null ? string.Empty : transfer.ToInstitute.InstituteNameEN,
         TransferredByName = transfer.TransferredBy == null ? string.Empty : transfer.TransferredBy.Username,
         TransferDate = transfer.TransferDate,
         Reason = transfer.Reason

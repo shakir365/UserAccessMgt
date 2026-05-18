@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserAccessMgt.Api.Authorization;
+using UserAccessMgt.Application.DTOs.Common;
 using UserAccessMgt.Application.DTOs.Institute;
 using UserAccessMgt.Application.Interfaces;
 
@@ -19,9 +20,11 @@ public class InstituteController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Create([FromBody] CreateInstituteRequest request)
     {
+        if (!User.IsSuperAdmin())
+            return SuperAdminRequired("create institutes");
+
         var result = await _instituteService.CreateAsync(request);
         if (!result.Success)
             return BadRequest(result);
@@ -41,9 +44,11 @@ public class InstituteController : ControllerBase
     }
 
     [HttpGet("code/{code}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> GetByCode(string code)
     {
+        if (!User.IsSuperAdmin())
+            return SuperAdminRequired("view institute by code");
+
         var result = await _instituteService.GetByCodeAsync(code);
         if (!result.Success)
             return NotFound(result);
@@ -51,17 +56,21 @@ public class InstituteController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> GetAll()
     {
+        if (!User.IsSuperAdmin())
+            return SuperAdminRequired("view all institutes");
+
         var result = await _instituteService.GetAllAsync();
         return Ok(result);
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateInstituteRequest request)
     {
+        if (!User.IsSuperAdmin())
+            return SuperAdminRequired("update institutes");
+
         var result = await _instituteService.UpdateAsync(id, request);
         if (!result.Success)
             return NotFound(result);
@@ -69,12 +78,18 @@ public class InstituteController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Delete(int id)
     {
+        if (!User.IsSuperAdmin())
+            return SuperAdminRequired("delete institutes");
+
         var result = await _instituteService.DeleteAsync(id);
         if (!result.Success)
             return NotFound(result);
         return Ok(result);
     }
+
+    private ObjectResult SuperAdminRequired(string action)
+        => StatusCode(StatusCodes.Status403Forbidden,
+            ApiResponse<object>.Fail($"Only SuperAdmin users can {action}.", "SUPER_ADMIN_REQUIRED"));
 }

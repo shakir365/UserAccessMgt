@@ -9,11 +9,9 @@ public class AttendanceDto
     public string UserName { get; set; } = string.Empty;
     public DateTime Date { get; set; }
     public DateTime? CheckInTime { get; set; }
-    public double? CheckInLatitude { get; set; }
-    public double? CheckInLongitude { get; set; }
     public DateTime? CheckOutTime { get; set; }
-    public double? CheckOutLatitude { get; set; }
-    public double? CheckOutLongitude { get; set; }
+    public string? CheckInLatitudeLongitude { get; set; }
+    public string? CheckOutLatitudeLongitude { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? Notes { get; set; }
     public int InstituteId { get; set; }
@@ -31,15 +29,9 @@ public class CreateAttendanceRequest
     public DateTime Date { get; set; }
 
     public DateTime? CheckInTime { get; set; }
-    [Range(-90, 90)]
-    public double? CheckInLatitude { get; set; }
-    [Range(-180, 180)]
-    public double? CheckInLongitude { get; set; }
+    public string? CheckInLatitudeLongitude { get; set; }
     public DateTime? CheckOutTime { get; set; }
-    [Range(-90, 90)]
-    public double? CheckOutLatitude { get; set; }
-    [Range(-180, 180)]
-    public double? CheckOutLongitude { get; set; }
+    public string? CheckOutLatitudeLongitude { get; set; }
 
     [Required]
     public string Status { get; set; } = "Present";
@@ -53,15 +45,9 @@ public class CreateAttendanceRequest
 public class UpdateAttendanceRequest
 {
     public DateTime? CheckInTime { get; set; }
-    [Range(-90, 90)]
-    public double? CheckInLatitude { get; set; }
-    [Range(-180, 180)]
-    public double? CheckInLongitude { get; set; }
+    public string? CheckInLatitudeLongitude { get; set; }
     public DateTime? CheckOutTime { get; set; }
-    [Range(-90, 90)]
-    public double? CheckOutLatitude { get; set; }
-    [Range(-180, 180)]
-    public double? CheckOutLongitude { get; set; }
+    public string? CheckOutLatitudeLongitude { get; set; }
     public string? Status { get; set; }
     public string? Notes { get; set; }
 }

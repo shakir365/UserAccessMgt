@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserAccessMgt.Api.Authorization;
+using UserAccessMgt.Application.DTOs.Common;
 using UserAccessMgt.Application.DTOs.Grade;
 using UserAccessMgt.Application.Interfaces;
 
@@ -19,9 +20,11 @@ public class GradeController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Create([FromBody] CreateGradeRequest request)
     {
+        if (!User.IsSuperAdmin())
+            return SuperAdminRequired("create grades");
+
         var result = await _gradeService.CreateAsync(request);
         if (!result.Success)
             return BadRequest(result);
@@ -57,9 +60,11 @@ public class GradeController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateGradeRequest request)
     {
+        if (!User.IsSuperAdmin())
+            return SuperAdminRequired("update grades");
+
         var result = await _gradeService.UpdateAsync(id, request);
         if (!result.Success)
             return NotFound(result);
@@ -68,13 +73,19 @@ public class GradeController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Delete(int id)
     {
+        if (!User.IsSuperAdmin())
+            return SuperAdminRequired("delete grades");
+
         var result = await _gradeService.DeleteAsync(id);
         if (!result.Success)
             return NotFound(result);
 
         return Ok(result);
     }
+
+    private ObjectResult SuperAdminRequired(string action)
+        => StatusCode(StatusCodes.Status403Forbidden,
+            ApiResponse<object>.Fail($"Only SuperAdmin users can {action}.", "SUPER_ADMIN_REQUIRED"));
 }

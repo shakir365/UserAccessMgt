@@ -54,8 +54,7 @@ public class AttendanceService : IAttendanceService
         if (existing is not null)
         {
             existing.CheckOutTime = request.CheckOutTime ?? BangladeshNow;
-            existing.CheckOutLatitude = request.CheckOutLatitude;
-            existing.CheckOutLongitude = request.CheckOutLongitude;
+            existing.CheckOutLatitudeLongitude = request.CheckOutLatitudeLongitude?.Trim();
             _unitOfWork.Repository<Attendance>().Update(existing);
             await _unitOfWork.SaveChangesAsync();
             return ApiResponse<AttendanceDto>.Ok(GetDto(existing.Id), "Check-out updated successfully");
@@ -67,11 +66,9 @@ public class AttendanceService : IAttendanceService
             UserId = request.UserId,
             Date = attendanceDate,
             CheckInTime = request.CheckInTime ?? now,
-            CheckInLatitude = request.CheckInLatitude,
-            CheckInLongitude = request.CheckInLongitude,
             CheckOutTime = request.CheckOutTime,
-            CheckOutLatitude = request.CheckOutLatitude,
-            CheckOutLongitude = request.CheckOutLongitude,
+            CheckInLatitudeLongitude = request.CheckInLatitudeLongitude?.Trim(),
+            CheckOutLatitudeLongitude = request.CheckOutLatitudeLongitude?.Trim(),
             Status = request.Status,
             Notes = request.Notes,
             InstituteId = request.InstituteId,
@@ -152,11 +149,9 @@ public class AttendanceService : IAttendanceService
 
         if (request.CheckInTime.HasValue) attendance.CheckInTime = request.CheckInTime;
         if (request.CheckOutTime.HasValue) attendance.CheckOutTime = request.CheckOutTime;
-        else if (request.CheckOutLatitude.HasValue || request.CheckOutLongitude.HasValue) attendance.CheckOutTime = BangladeshNow;
-        if (request.CheckOutLatitude.HasValue) attendance.CheckOutLatitude = request.CheckOutLatitude;
-        if (request.CheckOutLongitude.HasValue) attendance.CheckOutLongitude = request.CheckOutLongitude;
-        if (request.CheckInLatitude.HasValue) attendance.CheckInLatitude = request.CheckInLatitude;
-        if (request.CheckInLongitude.HasValue) attendance.CheckInLongitude = request.CheckInLongitude;
+        else if (request.CheckOutLatitudeLongitude is not null) attendance.CheckOutTime = BangladeshNow;
+        if (request.CheckInLatitudeLongitude is not null) attendance.CheckInLatitudeLongitude = request.CheckInLatitudeLongitude.Trim();
+        if (request.CheckOutLatitudeLongitude is not null) attendance.CheckOutLatitudeLongitude = request.CheckOutLatitudeLongitude.Trim();
         if (request.Status is not null)
         {
             if (!ValidStatuses.Contains(request.Status))
@@ -191,15 +186,13 @@ public class AttendanceService : IAttendanceService
         UserName = attendance.User == null ? string.Empty : attendance.User.Username,
         Date = attendance.Date,
         CheckInTime = attendance.CheckInTime,
-        CheckInLatitude = attendance.CheckInLatitude,
-        CheckInLongitude = attendance.CheckInLongitude,
         CheckOutTime = attendance.CheckOutTime,
-        CheckOutLatitude = attendance.CheckOutLatitude,
-        CheckOutLongitude = attendance.CheckOutLongitude,
+        CheckInLatitudeLongitude = attendance.CheckInLatitudeLongitude,
+        CheckOutLatitudeLongitude = attendance.CheckOutLatitudeLongitude,
         Status = attendance.Status,
         Notes = attendance.Notes,
         InstituteId = attendance.InstituteId,
-        InstituteName = attendance.Institute == null ? string.Empty : attendance.Institute.Name,
+        InstituteName = attendance.Institute == null ? string.Empty : attendance.Institute.InstituteNameEN,
         SubmittedByUserId = attendance.SubmittedByUserId,
         SubmittedByUserName = attendance.SubmittedByUser == null ? string.Empty : attendance.SubmittedByUser.Username
     };

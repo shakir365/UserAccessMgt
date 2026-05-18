@@ -51,11 +51,13 @@ public class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Code).IsUnique();
-            entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
             entity.Property(e => e.Code).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.InstituteNameEN).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.InstituteNameBN).HasMaxLength(255).IsRequired();
             entity.Property(e => e.Address).HasMaxLength(500);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
             entity.Property(e => e.Email).HasMaxLength(255);
+            entity.Property(e => e.LatitudeLongitude).HasMaxLength(100);
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -98,6 +100,8 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Status).HasMaxLength(20).IsRequired();
             entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.CheckInLatitudeLongitude).HasMaxLength(100);
+            entity.Property(e => e.CheckOutLatitudeLongitude).HasMaxLength(100);
 
             entity.HasOne(e => e.User)
                 .WithMany(u => u.Attendances)
@@ -173,7 +177,11 @@ public class AppDbContext : DbContext
                 .HasMaxLength(50)
                 .IsRequired();
 
-            entity.Property(e => e.GradeName)
+            entity.Property(e => e.GradeNameEN)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(e => e.GradeNameBN)
                 .HasMaxLength(150)
                 .IsRequired();
 
@@ -193,7 +201,11 @@ public class AppDbContext : DbContext
                 .HasMaxLength(50)
                 .IsRequired();
 
-            entity.Property(e => e.DesignationName)
+            entity.Property(e => e.DesignationNameEN)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(e => e.DesignationNameBN)
                 .HasMaxLength(150)
                 .IsRequired();
 
