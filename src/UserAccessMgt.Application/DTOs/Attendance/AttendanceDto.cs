@@ -9,11 +9,9 @@ public class AttendanceDto
     public string UserName { get; set; } = string.Empty;
     public DateTime Date { get; set; }
     public DateTime? CheckInTime { get; set; }
-    public double? CheckInLatitude { get; set; }
-    public double? CheckInLongitude { get; set; }
     public DateTime? CheckOutTime { get; set; }
-    public double? CheckOutLatitude { get; set; }
-    public double? CheckOutLongitude { get; set; }
+    public string? CheckInLatitudeLongitude { get; set; }
+    public string? CheckOutLatitudeLongitude { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? Notes { get; set; }
     public int InstituteId { get; set; }
@@ -24,36 +22,32 @@ public class AttendanceDto
 
 public class CreateAttendanceRequest
 {
-    [Required]
+    [Range(1, int.MaxValue)]
     public int UserId { get; set; }
 
     [Required]
     public DateTime Date { get; set; }
 
     public DateTime? CheckInTime { get; set; }
-    public double? CheckInLatitude { get; set; }
-    public double? CheckInLongitude { get; set; }
+    public string? CheckInLatitudeLongitude { get; set; }
     public DateTime? CheckOutTime { get; set; }
-    public double? CheckOutLatitude { get; set; }
-    public double? CheckOutLongitude { get; set; }
+    public string? CheckOutLatitudeLongitude { get; set; }
 
     [Required]
     public string Status { get; set; } = "Present";
 
     public string? Notes { get; set; }
 
-    [Required]
+    [Range(1, int.MaxValue)]
     public int InstituteId { get; set; }
 }
 
 public class UpdateAttendanceRequest
 {
     public DateTime? CheckInTime { get; set; }
-    public double? CheckInLatitude { get; set; }
-    public double? CheckInLongitude { get; set; }
+    public string? CheckInLatitudeLongitude { get; set; }
     public DateTime? CheckOutTime { get; set; }
-    public double? CheckOutLatitude { get; set; }
-    public double? CheckOutLongitude { get; set; }
+    public string? CheckOutLatitudeLongitude { get; set; }
     public string? Status { get; set; }
     public string? Notes { get; set; }
 }

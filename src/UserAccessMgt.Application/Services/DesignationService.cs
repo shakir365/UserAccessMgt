@@ -16,16 +16,24 @@ public class DesignationService : IDesignationService
 
     public async Task<ApiResponse<DesignationDto>> CreateAsync(CreateDesignationRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.DesignationCode))
+            return ApiResponse<DesignationDto>.Fail("Designation code is required", "DESIGNATION_CODE_REQUIRED");
+
+        if (string.IsNullOrWhiteSpace(request.DesignationNameEN))
+            return ApiResponse<DesignationDto>.Fail("English designation name is required", "DESIGNATION_NAME_EN_REQUIRED");
+
+        var designationCode = request.DesignationCode.Trim();
         var existing = await _unitOfWork.Repository<Designation>()
-            .FirstOrDefaultAsync(d => d.DesignationCode == request.DesignationCode);
+            .FirstOrDefaultAsync(d => d.DesignationCode == designationCode);
 
         if (existing is not null)
             return ApiResponse<DesignationDto>.Fail("Designation code already exists", "CODE_EXISTS");
 
         var designation = new Designation
         {
-            DesignationCode = request.DesignationCode,
-            DesignationName = request.DesignationName,
+            DesignationCode = designationCode,
+            DesignationNameEN = request.DesignationNameEN.Trim(),
+            DesignationNameBN = request.DesignationNameBN.Trim(),
             IsActive = true,
             CreateDate = DateTime.UtcNow
         };
@@ -70,8 +78,16 @@ public class DesignationService : IDesignationService
         if (designation is null)
             return ApiResponse<DesignationDto>.Fail("Designation not found", "NOT_FOUND");
 
-        if (request.DesignationName is not null)
-            designation.DesignationName = request.DesignationName;
+        if (request.DesignationNameEN is not null)
+        {
+            if (string.IsNullOrWhiteSpace(request.DesignationNameEN))
+                return ApiResponse<DesignationDto>.Fail("English designation name is required", "DESIGNATION_NAME_EN_REQUIRED");
+
+            designation.DesignationNameEN = request.DesignationNameEN.Trim();
+        }
+
+        if (request.DesignationNameBN is not null)
+            designation.DesignationNameBN = request.DesignationNameBN.Trim();
 
         if (request.IsActive.HasValue)
             designation.IsActive = request.IsActive.Value;
@@ -99,7 +115,8 @@ public class DesignationService : IDesignationService
     {
         Id = designation.Id,
         DesignationCode = designation.DesignationCode,
-        DesignationName = designation.DesignationName,
+        DesignationNameEN = designation.DesignationNameEN,
+        DesignationNameBN = designation.DesignationNameBN,
         IsActive = designation.IsActive,
         CreateDate = designation.CreateDate
     };

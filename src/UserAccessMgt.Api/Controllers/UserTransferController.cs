@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using UserAccessMgt.Api.Authorization;
 using UserAccessMgt.Application.DTOs.Transfer;
 using UserAccessMgt.Application.Interfaces;
 
@@ -19,19 +19,21 @@ public class UserTransferController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Transfer([FromBody] CreateTransferRequest request)
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var transferredById))
+        var transferredById = User.GetUserId();
+        if (!transferredById.HasValue)
             return Unauthorized();
 
-        var result = await _userTransferService.TransferAsync(request, transferredById);
+        var result = await _userTransferService.TransferAsync(request, transferredById.Value);
         if (!result.Success)
             return BadRequest(result);
         return Ok(result);
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _userTransferService.GetByIdAsync(id);
@@ -43,6 +45,9 @@ public class UserTransferController : ControllerBase
     [HttpGet("user/{userId}")]
     public async Task<IActionResult> GetByUser(int userId)
     {
+        if (!User.CanAccessOwnUser(userId))
+            return Forbid();
+
         var result = await _userTransferService.GetByUserAsync(userId);
         return Ok(result);
     }
@@ -50,11 +55,15 @@ public class UserTransferController : ControllerBase
     [HttpGet("institute/{instituteId}")]
     public async Task<IActionResult> GetByInstitute(int instituteId)
     {
+        if (!User.CanAccessInstitute(instituteId))
+            return Forbid();
+
         var result = await _userTransferService.GetByInstituteAsync(instituteId);
         return Ok(result);
     }
 
     [HttpGet]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> GetAll()
     {
         var result = await _userTransferService.GetAllAsync();

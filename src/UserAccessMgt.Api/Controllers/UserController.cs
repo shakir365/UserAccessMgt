@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UserAccessMgt.Api.Authorization;
 using UserAccessMgt.Application.DTOs.User;
 using UserAccessMgt.Application.Interfaces;
 
@@ -20,6 +21,9 @@ public class UserController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
+        if (!User.CanAccessOwnUser(id))
+            return Forbid();
+
         var result = await _userService.GetByIdAsync(id);
         if (!result.Success)
             return NotFound(result);
@@ -29,11 +33,15 @@ public class UserController : ControllerBase
     [HttpGet("institute/{instituteId}")]
     public async Task<IActionResult> GetAll(int instituteId)
     {
+        if (!User.CanAccessInstitute(instituteId))
+            return Forbid();
+
         var result = await _userService.GetAllAsync(instituteId);
         return Ok(result);
     }
 
     [HttpPatch("{id}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateUserRequest request)
     {
         var result = await _userService.UpdateAsync(id, request);
@@ -43,6 +51,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("{id}/deactivate")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Deactivate(int id)
     {
         var result = await _userService.DeactivateAsync(id);
@@ -52,6 +61,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("{id}/activate")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Activate(int id)
     {
         var result = await _userService.ActivateAsync(id);
