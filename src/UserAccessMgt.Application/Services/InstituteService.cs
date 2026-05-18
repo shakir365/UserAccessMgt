@@ -16,19 +16,28 @@ public class InstituteService : IInstituteService
 
     public async Task<ApiResponse<InstituteDto>> CreateAsync(CreateInstituteRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Code))
+            return ApiResponse<InstituteDto>.Fail("Institute code is required", "INSTITUTE_CODE_REQUIRED");
+
+        if (string.IsNullOrWhiteSpace(request.InstituteNameEN))
+            return ApiResponse<InstituteDto>.Fail("English institute name is required", "INSTITUTE_NAME_EN_REQUIRED");
+
+        var code = request.Code.Trim();
         var existing = await _unitOfWork.Repository<Institute>()
-            .FirstOrDefaultAsync(i => i.Code == request.Code);
+            .FirstOrDefaultAsync(i => i.Code == code);
 
         if (existing is not null)
             return ApiResponse<InstituteDto>.Fail("Institute code already exists", "CODE_EXISTS");
 
         var institute = new Institute
         {
-            Name = request.Name,
-            Code = request.Code,
-            Address = request.Address,
-            PhoneNumber = request.PhoneNumber,
-            Email = request.Email,
+            Code = code,
+            InstituteNameEN = request.InstituteNameEN.Trim(),
+            InstituteNameBN = request.InstituteNameBN.Trim(),
+            Address = request.Address?.Trim(),
+            PhoneNumber = request.PhoneNumber?.Trim(),
+            Email = request.Email?.Trim(),
+            LatitudeLongitude = request.LatitudeLongitude?.Trim(),
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
@@ -71,10 +80,19 @@ public class InstituteService : IInstituteService
         if (institute is null)
             return ApiResponse<InstituteDto>.Fail("Institute not found", "NOT_FOUND");
 
-        if (request.Name is not null) institute.Name = request.Name;
-        if (request.Address is not null) institute.Address = request.Address;
-        if (request.PhoneNumber is not null) institute.PhoneNumber = request.PhoneNumber;
-        if (request.Email is not null) institute.Email = request.Email;
+        if (request.InstituteNameEN is not null)
+        {
+            if (string.IsNullOrWhiteSpace(request.InstituteNameEN))
+                return ApiResponse<InstituteDto>.Fail("English institute name is required", "INSTITUTE_NAME_EN_REQUIRED");
+
+            institute.InstituteNameEN = request.InstituteNameEN.Trim();
+        }
+
+        if (request.InstituteNameBN is not null) institute.InstituteNameBN = request.InstituteNameBN.Trim();
+        if (request.Address is not null) institute.Address = request.Address.Trim();
+        if (request.PhoneNumber is not null) institute.PhoneNumber = request.PhoneNumber.Trim();
+        if (request.Email is not null) institute.Email = request.Email.Trim();
+        if (request.LatitudeLongitude is not null) institute.LatitudeLongitude = request.LatitudeLongitude.Trim();
         if (request.IsActive.HasValue) institute.IsActive = request.IsActive.Value;
 
         institute.UpdatedAt = DateTime.UtcNow;
@@ -99,12 +117,15 @@ public class InstituteService : IInstituteService
     private static InstituteDto MapToDto(Institute institute) => new()
     {
         Id = institute.Id,
-        Name = institute.Name,
         Code = institute.Code,
+        InstituteNameEN = institute.InstituteNameEN,
+        InstituteNameBN = institute.InstituteNameBN,
         Address = institute.Address,
         PhoneNumber = institute.PhoneNumber,
         Email = institute.Email,
         IsActive = institute.IsActive,
-        CreatedAt = institute.CreatedAt
+        CreatedAt = institute.CreatedAt,
+        UpdatedAt = institute.UpdatedAt,
+        LatitudeLongitude = institute.LatitudeLongitude
     };
 }

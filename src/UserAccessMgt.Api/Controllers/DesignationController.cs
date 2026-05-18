@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UserAccessMgt.Api.Authorization;
+using UserAccessMgt.Application.DTOs.Common;
 using UserAccessMgt.Application.DTOs.Designation;
 using UserAccessMgt.Application.Interfaces;
 
@@ -20,6 +22,9 @@ public class DesignationController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateDesignationRequest request)
     {
+        if (!User.IsSuperAdmin())
+            return SuperAdminRequired("create designations");
+
         var result = await _designationService.CreateAsync(request);
 
         if (!result.Success)
@@ -60,6 +65,9 @@ public class DesignationController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateDesignationRequest request)
     {
+        if (!User.IsSuperAdmin())
+            return SuperAdminRequired("update designations");
+
         var result = await _designationService.UpdateAsync(id, request);
 
         if (!result.Success)
@@ -71,6 +79,9 @@ public class DesignationController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
+        if (!User.IsSuperAdmin())
+            return SuperAdminRequired("delete designations");
+
         var result = await _designationService.DeleteAsync(id);
 
         if (!result.Success)
@@ -78,4 +89,8 @@ public class DesignationController : ControllerBase
 
         return Ok(result);
     }
+
+    private ObjectResult SuperAdminRequired(string action)
+        => StatusCode(StatusCodes.Status403Forbidden,
+            ApiResponse<object>.Fail($"Only SuperAdmin users can {action}.", "SUPER_ADMIN_REQUIRED"));
 }

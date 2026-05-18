@@ -14,21 +14,29 @@ public class UserService : IUserService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ApiResponse<UserDto>> GetByIdAsync(int id)
+    public Task<ApiResponse<UserDto>> GetByIdAsync(int id)
     {
-        var user = await _unitOfWork.Repository<User>().GetByIdAsync(id);
-        if (user is null)
-            return ApiResponse<UserDto>.Fail("User not found", "NOT_FOUND");
+        var user = _unitOfWork.Repository<User>()
+            .Query()
+            .Where(u => u.Id == id)
+            .Select(MapToDtoExpression)
+            .FirstOrDefault();
 
-        return ApiResponse<UserDto>.Ok(MapToDto(user));
+        if (user is null)
+            return Task.FromResult(ApiResponse<UserDto>.Fail("User not found", "NOT_FOUND"));
+
+        return Task.FromResult(ApiResponse<UserDto>.Ok(user));
     }
 
-    public async Task<ApiResponse<IEnumerable<UserDto>>> GetAllAsync(int instituteId)
+    public Task<ApiResponse<IEnumerable<UserDto>>> GetAllAsync(int instituteId)
     {
-        var users = await _unitOfWork.Repository<User>()
-            .FindAsync(u => u.InstituteId == instituteId);
+        var users = _unitOfWork.Repository<User>()
+            .Query()
+            .Where(u => u.InstituteId == instituteId)
+            .Select(MapToDtoExpression)
+            .ToList();
 
-        return ApiResponse<IEnumerable<UserDto>>.Ok(users.Select(MapToDto));
+        return Task.FromResult(ApiResponse<IEnumerable<UserDto>>.Ok(users.AsEnumerable()));
     }
 
     public async Task<ApiResponse<UserDto>> UpdateAsync(int id, UpdateUserRequest request)
@@ -46,7 +54,7 @@ public class UserService : IUserService
         _unitOfWork.Repository<User>().Update(user);
         await _unitOfWork.SaveChangesAsync();
 
-        return ApiResponse<UserDto>.Ok(MapToDto(user), "User updated successfully");
+        return ApiResponse<UserDto>.Ok(await GetDtoAsync(user.Id), "User updated successfully");
     }
 
     public async Task<ApiResponse<string>> DeactivateAsync(int id)
@@ -77,7 +85,7 @@ public class UserService : IUserService
         return ApiResponse<string>.Ok("User activated successfully");
     }
 
-    private static UserDto MapToDto(User user) => new()
+    private static readonly System.Linq.Expressions.Expression<Func<User, UserDto>> MapToDtoExpression = user => new UserDto
     {
         Id = user.Id,
         Username = user.Username,
@@ -88,7 +96,14 @@ public class UserService : IUserService
         IsActive = user.IsActive,
         CreatedAt = user.CreatedAt,
         LastLoginAt = user.LastLoginAt,
-        InstituteName = user.Institute?.Name ?? string.Empty,
-        RoleName = user.Role?.Name ?? string.Empty
+        InstituteName = user.Institute == null ? string.Empty : user.Institute.InstituteNameEN,
+        RoleName = user.Role == null ? string.Empty : user.Role.Name
     };
+
+    private Task<UserDto> GetDtoAsync(int id)
+        => Task.FromResult(_unitOfWork.Repository<User>()
+            .Query()
+            .Where(u => u.Id == id)
+            .Select(MapToDtoExpression)
+            .First());
 }

@@ -8,6 +8,7 @@ namespace UserAccessMgt.Application.Services;
 public class LeaveService : ILeaveService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private static readonly string[] ValidApprovalStatuses = ["Approved", "Rejected"];
 
     public LeaveService(IUnitOfWork unitOfWork)
     {
@@ -37,20 +38,26 @@ public class LeaveService : ILeaveService
         await _unitOfWork.Repository<LeaveRequest>().AddAsync(leave);
         await _unitOfWork.SaveChangesAsync();
 
-        return ApiResponse<LeaveRequestDto>.Ok(MapToDto(leave), "Leave applied successfully");
+        return ApiResponse<LeaveRequestDto>.Ok(GetDto(leave.Id), "Leave applied successfully");
     }
 
-    public async Task<ApiResponse<LeaveRequestDto>> ApproveAsync(int id, int approverId, ApproveLeaveRequest request)
+    public async Task<ApiResponse<LeaveRequestDto>> ApproveAsync(int id, int approverId, ApproveLeaveRequest request, int? approverInstituteId, bool isSuperAdmin)
     {
         var leave = await _unitOfWork.Repository<LeaveRequest>().GetByIdAsync(id);
         if (leave is null)
             return ApiResponse<LeaveRequestDto>.Fail("Leave request not found", "NOT_FOUND");
 
+        var leaveUser = await _unitOfWork.Repository<User>().GetByIdAsync(leave.UserId);
+        if (leaveUser is null)
+            return ApiResponse<LeaveRequestDto>.Fail("Leave request user not found", "USER_NOT_FOUND");
+
+        if (!isSuperAdmin && leaveUser.InstituteId != approverInstituteId)
+            return ApiResponse<LeaveRequestDto>.Fail("Leave request is outside your institute", "FORBIDDEN");
+
         if (leave.Status != "Pending")
             return ApiResponse<LeaveRequestDto>.Fail("Leave request is already " + leave.Status, "ALREADY_PROCESSED");
 
-        var validStatuses = new[] { "Approved", "Rejected" };
-        if (!validStatuses.Contains(request.Status))
+        if (!ValidApprovalStatuses.Contains(request.Status))
             return ApiResponse<LeaveRequestDto>.Fail("Status must be Approved or Rejected", "INVALID_STATUS");
 
         leave.Status = request.Status;
@@ -62,52 +69,72 @@ public class LeaveService : ILeaveService
         _unitOfWork.Repository<LeaveRequest>().Update(leave);
         await _unitOfWork.SaveChangesAsync();
 
-        return ApiResponse<LeaveRequestDto>.Ok(MapToDto(leave), $"Leave {request.Status.ToLower()} successfully");
+        return ApiResponse<LeaveRequestDto>.Ok(GetDto(leave.Id), $"Leave {request.Status.ToLower()} successfully");
     }
 
-    public async Task<ApiResponse<LeaveRequestDto>> GetByIdAsync(int id)
+    public Task<ApiResponse<LeaveRequestDto>> GetByIdAsync(int id)
     {
-        var leave = await _unitOfWork.Repository<LeaveRequest>().GetByIdAsync(id);
+        var leave = _unitOfWork.Repository<LeaveRequest>()
+            .Query()
+            .Where(l => l.Id == id)
+            .Select(ProjectToDto)
+            .FirstOrDefault();
         if (leave is null)
-            return ApiResponse<LeaveRequestDto>.Fail("Leave request not found", "NOT_FOUND");
+            return Task.FromResult(ApiResponse<LeaveRequestDto>.Fail("Leave request not found", "NOT_FOUND"));
 
-        return ApiResponse<LeaveRequestDto>.Ok(MapToDto(leave));
+        return Task.FromResult(ApiResponse<LeaveRequestDto>.Ok(leave));
     }
 
-    public async Task<ApiResponse<IEnumerable<LeaveRequestDto>>> GetByUserAsync(int userId)
+    public Task<ApiResponse<IEnumerable<LeaveRequestDto>>> GetByUserAsync(int userId)
     {
-        var records = await _unitOfWork.Repository<LeaveRequest>()
-            .FindAsync(l => l.UserId == userId);
-        return ApiResponse<IEnumerable<LeaveRequestDto>>.Ok(records.Select(MapToDto));
+        var records = _unitOfWork.Repository<LeaveRequest>()
+            .Query()
+            .Where(l => l.UserId == userId)
+            .Select(ProjectToDto)
+            .ToList();
+        return Task.FromResult(ApiResponse<IEnumerable<LeaveRequestDto>>.Ok(records));
     }
 
-    public async Task<ApiResponse<IEnumerable<LeaveRequestDto>>> GetPendingAsync()
+    public Task<ApiResponse<IEnumerable<LeaveRequestDto>>> GetPendingAsync()
     {
-        var records = await _unitOfWork.Repository<LeaveRequest>()
-            .FindAsync(l => l.Status == "Pending");
-        return ApiResponse<IEnumerable<LeaveRequestDto>>.Ok(records.Select(MapToDto));
+        var records = _unitOfWork.Repository<LeaveRequest>()
+            .Query()
+            .Where(l => l.Status == "Pending")
+            .Select(ProjectToDto)
+            .ToList();
+        return Task.FromResult(ApiResponse<IEnumerable<LeaveRequestDto>>.Ok(records));
     }
 
-    public async Task<ApiResponse<IEnumerable<LeaveRequestDto>>> GetAllAsync()
+    public Task<ApiResponse<IEnumerable<LeaveRequestDto>>> GetAllAsync()
     {
-        var records = await _unitOfWork.Repository<LeaveRequest>().GetAllAsync();
-        return ApiResponse<IEnumerable<LeaveRequestDto>>.Ok(records.Select(MapToDto));
+        var records = _unitOfWork.Repository<LeaveRequest>()
+            .Query()
+            .Select(ProjectToDto)
+            .ToList();
+        return Task.FromResult(ApiResponse<IEnumerable<LeaveRequestDto>>.Ok(records));
     }
 
-    private static LeaveRequestDto MapToDto(LeaveRequest leave) => new()
+    private static readonly System.Linq.Expressions.Expression<Func<LeaveRequest, LeaveRequestDto>> ProjectToDto = leave => new LeaveRequestDto
     {
         Id = leave.Id,
         UserId = leave.UserId,
-        UserName = leave.User?.Username ?? string.Empty,
+        UserName = leave.User == null ? string.Empty : leave.User.Username,
         LeaveType = leave.LeaveType,
         StartDate = leave.StartDate,
         EndDate = leave.EndDate,
         Reason = leave.Reason,
         Status = leave.Status,
         ApprovedById = leave.ApprovedById,
-        ApprovedByName = leave.ApprovedBy?.Username,
+        ApprovedByName = leave.ApprovedBy == null ? null : leave.ApprovedBy.Username,
         ApprovedAt = leave.ApprovedAt,
         Comments = leave.Comments,
         CreatedAt = leave.CreatedAt
     };
+
+    private LeaveRequestDto GetDto(int id)
+        => _unitOfWork.Repository<LeaveRequest>()
+            .Query()
+            .Where(l => l.Id == id)
+            .Select(ProjectToDto)
+            .First();
 }

@@ -24,10 +24,13 @@ public class UserTransferService : IUserTransferService
         if (toInstitute is null)
             return ApiResponse<UserTransferDto>.Fail("Target institute not found", "INSTITUTE_NOT_FOUND");
 
+        var transferredBy = await _unitOfWork.Repository<User>().GetByIdAsync(transferredById);
+        if (transferredBy is null)
+            return ApiResponse<UserTransferDto>.Fail("Transferred by user not found", "TRANSFERRED_BY_NOT_FOUND");
+
         if (user.InstituteId == request.ToInstituteId)
             return ApiResponse<UserTransferDto>.Fail("User is already in this institute", "SAME_INSTITUTE");
 
-        var fromInstitute = await _unitOfWork.Repository<Institute>().GetByIdAsync(user.InstituteId);
         var transfer = new UserTransfer
         {
             UserId = user.Id,
@@ -46,47 +49,67 @@ public class UserTransferService : IUserTransferService
         _unitOfWork.Repository<User>().Update(user);
         await _unitOfWork.SaveChangesAsync();
 
-        return ApiResponse<UserTransferDto>.Ok(MapToDto(transfer), "User transferred successfully");
+        return ApiResponse<UserTransferDto>.Ok(GetDto(transfer.Id), "User transferred successfully");
     }
 
-    public async Task<ApiResponse<IEnumerable<UserTransferDto>>> GetByUserAsync(int userId)
+    public Task<ApiResponse<IEnumerable<UserTransferDto>>> GetByUserAsync(int userId)
     {
-        var records = await _unitOfWork.Repository<UserTransfer>()
-            .FindAsync(t => t.UserId == userId);
-        return ApiResponse<IEnumerable<UserTransferDto>>.Ok(records.Select(MapToDto));
+        var records = _unitOfWork.Repository<UserTransfer>()
+            .Query()
+            .Where(t => t.UserId == userId)
+            .Select(ProjectToDto)
+            .ToList();
+        return Task.FromResult(ApiResponse<IEnumerable<UserTransferDto>>.Ok(records));
     }
 
-    public async Task<ApiResponse<IEnumerable<UserTransferDto>>> GetByInstituteAsync(int instituteId)
+    public Task<ApiResponse<IEnumerable<UserTransferDto>>> GetByInstituteAsync(int instituteId)
     {
-        var records = await _unitOfWork.Repository<UserTransfer>()
-            .FindAsync(t => t.FromInstituteId == instituteId || t.ToInstituteId == instituteId);
-        return ApiResponse<IEnumerable<UserTransferDto>>.Ok(records.Select(MapToDto));
+        var records = _unitOfWork.Repository<UserTransfer>()
+            .Query()
+            .Where(t => t.FromInstituteId == instituteId || t.ToInstituteId == instituteId)
+            .Select(ProjectToDto)
+            .ToList();
+        return Task.FromResult(ApiResponse<IEnumerable<UserTransferDto>>.Ok(records));
     }
 
-    public async Task<ApiResponse<IEnumerable<UserTransferDto>>> GetAllAsync()
+    public Task<ApiResponse<IEnumerable<UserTransferDto>>> GetAllAsync()
     {
-        var records = await _unitOfWork.Repository<UserTransfer>().GetAllAsync();
-        return ApiResponse<IEnumerable<UserTransferDto>>.Ok(records.Select(MapToDto));
+        var records = _unitOfWork.Repository<UserTransfer>()
+            .Query()
+            .Select(ProjectToDto)
+            .ToList();
+        return Task.FromResult(ApiResponse<IEnumerable<UserTransferDto>>.Ok(records));
     }
 
-    public async Task<ApiResponse<UserTransferDto>> GetByIdAsync(int id)
+    public Task<ApiResponse<UserTransferDto>> GetByIdAsync(int id)
     {
-        var transfer = await _unitOfWork.Repository<UserTransfer>().GetByIdAsync(id);
+        var transfer = _unitOfWork.Repository<UserTransfer>()
+            .Query()
+            .Where(t => t.Id == id)
+            .Select(ProjectToDto)
+            .FirstOrDefault();
         if (transfer is null)
-            return ApiResponse<UserTransferDto>.Fail("Transfer record not found", "NOT_FOUND");
+            return Task.FromResult(ApiResponse<UserTransferDto>.Fail("Transfer record not found", "NOT_FOUND"));
 
-        return ApiResponse<UserTransferDto>.Ok(MapToDto(transfer));
+        return Task.FromResult(ApiResponse<UserTransferDto>.Ok(transfer));
     }
 
-    private static UserTransferDto MapToDto(UserTransfer transfer) => new()
+    private static readonly System.Linq.Expressions.Expression<Func<UserTransfer, UserTransferDto>> ProjectToDto = transfer => new UserTransferDto
     {
         Id = transfer.Id,
         UserId = transfer.UserId,
-        UserName = transfer.User?.Username ?? string.Empty,
-        FromInstituteName = transfer.FromInstitute?.Name ?? string.Empty,
-        ToInstituteName = transfer.ToInstitute?.Name ?? string.Empty,
-        TransferredByName = transfer.TransferredBy?.Username ?? string.Empty,
+        UserName = transfer.User == null ? string.Empty : transfer.User.Username,
+        FromInstituteName = transfer.FromInstitute == null ? string.Empty : transfer.FromInstitute.InstituteNameEN,
+        ToInstituteName = transfer.ToInstitute == null ? string.Empty : transfer.ToInstitute.InstituteNameEN,
+        TransferredByName = transfer.TransferredBy == null ? string.Empty : transfer.TransferredBy.Username,
         TransferDate = transfer.TransferDate,
         Reason = transfer.Reason
     };
+
+    private UserTransferDto GetDto(int id)
+        => _unitOfWork.Repository<UserTransfer>()
+            .Query()
+            .Where(t => t.Id == id)
+            .Select(ProjectToDto)
+            .First();
 }

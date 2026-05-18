@@ -16,10 +16,10 @@ public class UserTransferDto
 
 public class CreateTransferRequest
 {
-    [Required]
+    [Range(1, int.MaxValue)]
     public int UserId { get; set; }
 
-    [Required]
+    [Range(1, int.MaxValue)]
     public int ToInstituteId { get; set; }
 
     public string? Reason { get; set; }

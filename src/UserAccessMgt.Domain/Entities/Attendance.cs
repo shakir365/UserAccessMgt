@@ -7,11 +7,9 @@ public class Attendance
     public User User { get; set; } = null!;
     public DateTime Date { get; set; }
     public DateTime? CheckInTime { get; set; }
-    public double? CheckInLatitude { get; set; }
-    public double? CheckInLongitude { get; set; }
     public DateTime? CheckOutTime { get; set; }
-    public double? CheckOutLatitude { get; set; }
-    public double? CheckOutLongitude { get; set; }
+    public string? CheckInLatitudeLongitude { get; set; }
+    public string? CheckOutLatitudeLongitude { get; set; }
     public string Status { get; set; } = "Present";
     public string? Notes { get; set; }
 
