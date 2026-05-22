@@ -25,16 +25,14 @@ public class CreateAttendanceRequest
     [Range(1, int.MaxValue)]
     public int UserId { get; set; }
 
-    [Required]
-    public DateTime Date { get; set; }
+    public DateTime? Date { get; set; }
 
     public DateTime? CheckInTime { get; set; }
     public string? CheckInLatitudeLongitude { get; set; }
     public DateTime? CheckOutTime { get; set; }
     public string? CheckOutLatitudeLongitude { get; set; }
 
-    [Required]
-    public string Status { get; set; } = "Present";
+    public string? Status { get; set; }
 
     public string? Notes { get; set; }
 

@@ -45,10 +45,11 @@ public class AttendanceService : IAttendanceService
         if (user.InstituteId != request.InstituteId)
             return ApiResponse<AttendanceDto>.Fail("User does not belong to this institute", "INSTITUTE_MISMATCH");
 
-        if (!ValidStatuses.Contains(request.Status))
+        var status = string.IsNullOrWhiteSpace(request.Status) ? "Present" : request.Status.Trim();
+        if (!ValidStatuses.Contains(status))
             return ApiResponse<AttendanceDto>.Fail("Invalid attendance status", "INVALID_STATUS");
 
-        var attendanceDate = request.Date.Date;
+        var attendanceDate = (request.Date ?? BangladeshNow).Date;
         var existing = await _unitOfWork.Repository<Attendance>()
             .FirstOrDefaultAsync(a => a.UserId == request.UserId && a.Date >= attendanceDate && a.Date < attendanceDate.AddDays(1));
         if (existing is not null)
@@ -69,7 +70,7 @@ public class AttendanceService : IAttendanceService
             CheckOutTime = request.CheckOutTime,
             CheckInLatitudeLongitude = request.CheckInLatitudeLongitude?.Trim(),
             CheckOutLatitudeLongitude = request.CheckOutLatitudeLongitude?.Trim(),
-            Status = request.Status,
+            Status = status,
             Notes = request.Notes,
             InstituteId = request.InstituteId,
             SubmittedByUserId = submittedByUserId,
