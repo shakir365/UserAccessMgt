@@ -96,6 +96,7 @@ public class UserService : IUserService
         IsActive = user.IsActive,
         CreatedAt = user.CreatedAt,
         LastLoginAt = user.LastLoginAt,
+        InstituteId = user.InstituteId,
         InstituteName = user.Institute == null ? string.Empty : user.Institute.InstituteNameEN,
         RoleName = user.Role == null ? string.Empty : user.Role.Name
     };

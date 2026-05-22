@@ -11,6 +11,7 @@ public class UserDto
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    public int InstituteId { get; set; }
     public string InstituteName { get; set; } = string.Empty;
     public string RoleName { get; set; } = string.Empty;
 }
