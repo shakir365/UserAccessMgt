@@ -98,10 +98,10 @@ public class UserTransferService : IUserTransferService
     {
         Id = transfer.Id,
         UserId = transfer.UserId,
-        UserName = transfer.User == null ? string.Empty : transfer.User.Username,
+        UserName = transfer.User == null ? string.Empty : transfer.User.LoginID,
         FromInstituteName = transfer.FromInstitute == null ? string.Empty : transfer.FromInstitute.InstituteNameEN,
         ToInstituteName = transfer.ToInstitute == null ? string.Empty : transfer.ToInstitute.InstituteNameEN,
-        TransferredByName = transfer.TransferredBy == null ? string.Empty : transfer.TransferredBy.Username,
+        TransferredByName = transfer.TransferredBy == null ? string.Empty : transfer.TransferredBy.LoginID,
         TransferDate = transfer.TransferDate,
         Reason = transfer.Reason
     };

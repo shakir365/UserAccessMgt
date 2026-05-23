@@ -27,14 +27,15 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.Email).IsUnique();
-            entity.HasIndex(e => e.Username).IsUnique();
-            entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
-            entity.Property(e => e.Username).HasMaxLength(100).IsRequired();
+            entity.ToTable(t => t.HasCheckConstraint("CK_Users_MobileNumber_BD", "[MobileNumber] LIKE '01[3-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'"));
+            entity.HasIndex(e => e.Email).IsUnique().HasFilter("[Email] IS NOT NULL");
+            entity.HasIndex(e => e.LoginID).IsUnique();
+            entity.Property(e => e.Email).HasMaxLength(255);
+            entity.Property(e => e.LoginID).HasMaxLength(100).IsRequired();
             entity.Property(e => e.PasswordHash).IsRequired();
             entity.Property(e => e.FirstName).HasMaxLength(100);
             entity.Property(e => e.LastName).HasMaxLength(100);
-            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+            entity.Property(e => e.MobileNumber).HasMaxLength(11).IsRequired();
 
             entity.HasOne(e => e.Institute)
                 .WithMany(i => i.Users)

@@ -184,7 +184,7 @@ public class AttendanceService : IAttendanceService
     {
         Id = attendance.Id,
         UserId = attendance.UserId,
-        UserName = attendance.User == null ? string.Empty : attendance.User.Username,
+        UserName = attendance.User == null ? string.Empty : attendance.User.LoginID,
         Date = attendance.Date,
         CheckInTime = attendance.CheckInTime,
         CheckOutTime = attendance.CheckOutTime,
@@ -195,7 +195,7 @@ public class AttendanceService : IAttendanceService
         InstituteId = attendance.InstituteId,
         InstituteName = attendance.Institute == null ? string.Empty : attendance.Institute.InstituteNameEN,
         SubmittedByUserId = attendance.SubmittedByUserId,
-        SubmittedByUserName = attendance.SubmittedByUser == null ? string.Empty : attendance.SubmittedByUser.Username
+        SubmittedByUserName = attendance.SubmittedByUser == null ? string.Empty : attendance.SubmittedByUser.LoginID
     };
 
     private AttendanceDto GetDto(int id)

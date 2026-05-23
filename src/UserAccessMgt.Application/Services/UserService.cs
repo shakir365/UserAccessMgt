@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using UserAccessMgt.Application.DTOs.Common;
 using UserAccessMgt.Application.DTOs.User;
 using UserAccessMgt.Application.Interfaces;
@@ -47,7 +48,16 @@ public class UserService : IUserService
 
         if (request.FirstName is not null) user.FirstName = request.FirstName;
         if (request.LastName is not null) user.LastName = request.LastName;
-        if (request.PhoneNumber is not null) user.PhoneNumber = request.PhoneNumber;
+        if (request.MobileNumber is not null)
+        {
+            var mobileNumber = request.MobileNumber.Trim();
+            if (!Regex.IsMatch(mobileNumber, @"^01[3-9]\d{8}$"))
+            {
+                return ApiResponse<UserDto>.Fail("MobileNumber must be a valid BD mobile number", "INVALID_MOBILE_NUMBER");
+            }
+
+            user.MobileNumber = mobileNumber;
+        }
         if (request.IsActive.HasValue) user.IsActive = request.IsActive.Value;
 
         user.UpdatedAt = DateTime.UtcNow;
@@ -88,11 +98,11 @@ public class UserService : IUserService
     private static readonly System.Linq.Expressions.Expression<Func<User, UserDto>> MapToDtoExpression = user => new UserDto
     {
         Id = user.Id,
-        Username = user.Username,
+        LoginID = user.LoginID,
         Email = user.Email,
         FirstName = user.FirstName,
         LastName = user.LastName,
-        PhoneNumber = user.PhoneNumber,
+        MobileNumber = user.MobileNumber,
         IsActive = user.IsActive,
         CreatedAt = user.CreatedAt,
         LastLoginAt = user.LastLoginAt,

@@ -18,6 +18,20 @@ public class UserController : ControllerBase
         _userService = userService;
     }
 
+    [HttpGet("UserByToken")]
+    public async Task<IActionResult> UserByToken()
+    {
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
+            return Unauthorized();
+
+        var result = await _userService.GetByIdAsync(userId.Value);
+        if (!result.Success)
+            return NotFound(result);
+
+        return Ok(result);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {

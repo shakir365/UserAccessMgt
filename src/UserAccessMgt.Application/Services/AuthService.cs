@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using UserAccessMgt.Application.DTOs.Auth;
 using UserAccessMgt.Application.DTOs.Common;
 using UserAccessMgt.Application.Interfaces;
@@ -20,17 +21,18 @@ public class AuthService : IAuthService
 
     public async Task<ApiResponse<TokenResponse>> LoginAsync(LoginRequest request, string? ipAddress, string? userAgent)
     {
-        var user = await _unitOfWork.Repository<User>().FirstOrDefaultAsync(u => u.Email == request.Email);
+        var loginId = request.LoginID.Trim();
+        var user = await _unitOfWork.Repository<User>().FirstOrDefaultAsync(u => u.LoginID == loginId);
 
         if (user is null || !_passwordService.VerifyPassword(request.Password, user.PasswordHash))
         {
-            await RecordLoginHistory(null, request.Email, ipAddress, userAgent, false, "Invalid credentials");
-            return ApiResponse<TokenResponse>.Fail("Invalid email or password", "INVALID_CREDENTIALS");
+            await RecordLoginHistory(null, loginId, ipAddress, userAgent, false, "Invalid credentials");
+            return ApiResponse<TokenResponse>.Fail("Invalid login ID or password", "INVALID_CREDENTIALS");
         }
 
         if (!user.IsActive)
         {
-            await RecordLoginHistory(user.Id, request.Email, ipAddress, userAgent, false, "Account deactivated");
+            await RecordLoginHistory(user.Id, loginId, ipAddress, userAgent, false, "Account deactivated");
             return ApiResponse<TokenResponse>.Fail("Account is deactivated", "ACCOUNT_DEACTIVATED");
         }
 
@@ -49,7 +51,7 @@ public class AuthService : IAuthService
         user.LastLoginAt = DateTime.UtcNow;
         _unitOfWork.Repository<User>().Update(user);
 
-        await RecordLoginHistory(user.Id, request.Email, ipAddress, userAgent, true, null);
+        await RecordLoginHistory(user.Id, loginId, ipAddress, userAgent, true, null);
 
         await _unitOfWork.SaveChangesAsync();
 
@@ -120,12 +122,20 @@ public class AuthService : IAuthService
 
     public async Task<ApiResponse<TokenResponse>> RegisterAsync(RegisterRequest request)
     {
+        var loginId = request.LoginID.Trim();
+        var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+        var mobileNumber = request.MobileNumber.Trim();
+        if (!Regex.IsMatch(mobileNumber, @"^01[3-9]\d{8}$"))
+        {
+            return ApiResponse<TokenResponse>.Fail("MobileNumber must be a valid BD mobile number", "INVALID_MOBILE_NUMBER");
+        }
+
         var existingUser = await _unitOfWork.Repository<User>()
-            .FirstOrDefaultAsync(u => u.Email == request.Email || u.Username == request.Username);
+            .FirstOrDefaultAsync(u => u.LoginID == loginId || (email != null && u.Email == email));
 
         if (existingUser is not null)
         {
-            return ApiResponse<TokenResponse>.Fail("User with this email or username already exists", "USER_EXISTS");
+            return ApiResponse<TokenResponse>.Fail("User with this email or login ID already exists", "USER_EXISTS");
         }
 
         var institute = await _unitOfWork.Repository<Institute>()
@@ -145,12 +155,12 @@ public class AuthService : IAuthService
 
         var user = new User
         {
-            Username = request.Username,
-            Email = request.Email,
+            LoginID = loginId,
+            Email = email,
             PasswordHash = _passwordService.HashPassword(request.Password),
             FirstName = request.FirstName,
             LastName = request.LastName,
-            PhoneNumber = request.PhoneNumber,
+            MobileNumber = mobileNumber,
             InstituteId = institute.Id,
             RoleId = defaultRole.Id,
             Role = defaultRole,
@@ -181,11 +191,11 @@ public class AuthService : IAuthService
         }, "Registration successful");
     }
 
-    private async Task RecordLoginHistory(int? userId, string? email, string? ipAddress, string? userAgent, bool isSuccessful, string? failureReason)
+    private async Task RecordLoginHistory(int? userId, string? loginId, string? ipAddress, string? userAgent, bool isSuccessful, string? failureReason)
     {
         if (!userId.HasValue)
         {
-            var user = await _unitOfWork.Repository<User>().FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _unitOfWork.Repository<User>().FirstOrDefaultAsync(u => u.LoginID == loginId);
             userId = user?.Id;
         }
 
