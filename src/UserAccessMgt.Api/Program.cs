@@ -57,6 +57,9 @@ builder.Services.AddScoped<IUserTransferService, UserTransferService>();
 builder.Services.AddScoped<IGradeService, GradeService>();
 builder.Services.AddScoped<IDesignationService, DesignationService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IHolidayService, HolidayService>();
+builder.Services.AddScoped<IWeekendService, WeekendService>();
+builder.Services.AddScoped<IShiftService, ShiftService>();
 
 var jwtSecret = builder.Configuration["Jwt:Secret"];
 if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret.Length < 32)
@@ -90,6 +93,25 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+var allowedCorsOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>()
+    ?? [
+        "https://bestboy.runasp.net",
+        "http://127.0.0.1:8088",
+        "http://localhost:8088"
+    ];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("UserAccessMgtWeb", policy =>
+    {
+        policy.WithOrigins(allowedCorsOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 app.UseExceptionMiddleware();
@@ -103,6 +125,7 @@ app.UseSwaggerUI(c =>
 
 //app.UseHttpsRedirection();
 app.UseHttpsRedirection();
+app.UseCors("UserAccessMgtWeb");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

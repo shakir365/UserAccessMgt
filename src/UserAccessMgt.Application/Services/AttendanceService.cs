@@ -8,6 +8,7 @@ namespace UserAccessMgt.Application.Services;
 public class AttendanceService : IAttendanceService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private const string GpsRequiredMessage = "Please, on your mobile GPS";
     private static readonly string[] ValidStatuses = ["Present", "Absent", "Late", "OnLeave"];
     private static readonly TimeZoneInfo _bdTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
         TryGetTimeZoneId("Bangladesh Standard Time", "Asia/Dhaka"));
@@ -54,6 +55,9 @@ public class AttendanceService : IAttendanceService
             .FirstOrDefaultAsync(a => a.UserId == request.UserId && a.Date >= attendanceDate && a.Date < attendanceDate.AddDays(1));
         if (existing is not null)
         {
+            if (string.IsNullOrWhiteSpace(request.CheckOutLatitudeLongitude))
+                return ApiResponse<AttendanceDto>.Fail(GpsRequiredMessage, "GPS_REQUIRED");
+
             existing.CheckOutTime = request.CheckOutTime ?? BangladeshNow;
             existing.CheckOutLatitudeLongitude = request.CheckOutLatitudeLongitude?.Trim();
             _unitOfWork.Repository<Attendance>().Update(existing);
@@ -61,12 +65,44 @@ public class AttendanceService : IAttendanceService
             return ApiResponse<AttendanceDto>.Ok(GetDto(existing.Id), "Check-out updated successfully");
         }
 
+        var holiday = _unitOfWork.Repository<Holiday>()
+            .Query()
+            .Where(h => h.IsActive
+                && h.HolidayDate == attendanceDate)
+            .Select(h => h.HolidayName)
+            .FirstOrDefault();
+        if (holiday is not null)
+            return ApiResponse<AttendanceDto>.Fail($"Attendance is not allowed on holiday: {holiday}", "HOLIDAY");
+
+        var dayOfWeek = (int)attendanceDate.DayOfWeek;
+        var isWeekend = _unitOfWork.Repository<Weekend>()
+            .Query()
+            .Any(w => w.IsActive
+                && w.DayOfWeek == dayOfWeek);
+        if (isWeekend)
+            return ApiResponse<AttendanceDto>.Fail("Attendance is not allowed on weekend", "WEEKEND");
+
+        if (string.IsNullOrWhiteSpace(request.CheckInLatitudeLongitude))
+            return ApiResponse<AttendanceDto>.Fail(GpsRequiredMessage, "GPS_REQUIRED");
+
         var now = BangladeshNow;
+        var checkInTime = request.CheckInTime ?? now;
+        if (status == "Present")
+        {
+            var shift = _unitOfWork.Repository<Shift>()
+                .Query()
+                .Where(s => s.IsActive)
+                .OrderBy(s => s.StartTime)
+                .FirstOrDefault();
+            if (shift is not null && checkInTime.TimeOfDay > shift.StartTime.Add(TimeSpan.FromMinutes(shift.LateAfterMinutes)))
+                status = "Late";
+        }
+
         var attendance = new Attendance
         {
             UserId = request.UserId,
             Date = attendanceDate,
-            CheckInTime = request.CheckInTime ?? now,
+            CheckInTime = checkInTime,
             CheckOutTime = request.CheckOutTime,
             CheckInLatitudeLongitude = request.CheckInLatitudeLongitude?.Trim(),
             CheckOutLatitudeLongitude = request.CheckOutLatitudeLongitude?.Trim(),

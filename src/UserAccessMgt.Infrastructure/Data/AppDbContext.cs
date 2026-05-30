@@ -18,6 +18,9 @@ public class AppDbContext : DbContext
     public DbSet<Grade> Grades => Set<Grade>();
     public DbSet<Designation> Designations => Set<Designation>();
     public DbSet<Department> Departments => Set<Department>();
+    public DbSet<Holiday> Holidays => Set<Holiday>();
+    public DbSet<Weekend> Weekends => Set<Weekend>();
+    public DbSet<Shift> Shifts => Set<Shift>();
     public DbSet<Division> Division => Set<Division>();
     public DbSet<District> District => Set<District>();
     public DbSet<Thana> Thana => Set<Thana>();
@@ -236,6 +239,42 @@ public class AppDbContext : DbContext
 
             entity.Property(e => e.CreateDate)
                 .IsRequired();
+        });
+
+        modelBuilder.Entity<Holiday>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.HolidayName).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.HolidayDate).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+
+            entity.HasIndex(e => e.HolidayDate).IsUnique();
+        });
+
+        modelBuilder.Entity<Weekend>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable(t => t.HasCheckConstraint("CK_Weekends_DayOfWeek", "[DayOfWeek] BETWEEN 0 AND 6"));
+            entity.Property(e => e.DayOfWeek).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+
+            entity.HasIndex(e => e.DayOfWeek).IsUnique();
+        });
+
+        modelBuilder.Entity<Shift>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.ShiftCode).IsUnique();
+            entity.Property(e => e.ShiftCode).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.ShiftName).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.StartTime).IsRequired();
+            entity.Property(e => e.EndTime).IsRequired();
+            entity.Property(e => e.LateAfterMinutes).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
         });
 
         SeedData(modelBuilder);

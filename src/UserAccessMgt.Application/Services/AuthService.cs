@@ -120,7 +120,7 @@ public class AuthService : IAuthService
         return ApiResponse<string>.Ok("Logged out successfully");
     }
 
-    public async Task<ApiResponse<TokenResponse>> RegisterAsync(RegisterRequest request)
+    public async Task<ApiResponse<TokenResponse>> RegisterAsync(RegisterRequest request, int? requesterInstituteId, bool requesterIsSuperAdmin)
     {
         var loginId = request.LoginID.Trim();
         var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
@@ -144,6 +144,13 @@ public class AuthService : IAuthService
         if (institute is null)
         {
             return ApiResponse<TokenResponse>.Fail("Invalid institute code", "INVALID_INSTITUTE");
+        }
+
+        if (!requesterIsSuperAdmin && institute.Id != requesterInstituteId)
+        {
+            return ApiResponse<TokenResponse>.Fail(
+                "InstituteAdmin users can register users only for their own institute.",
+                "INSTITUTE_ACCESS_DENIED");
         }
 
         var defaultRole = await _unitOfWork.Repository<Role>()

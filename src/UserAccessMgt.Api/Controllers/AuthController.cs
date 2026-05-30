@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UserAccessMgt.Api.Authorization;
 using UserAccessMgt.Application.DTOs.Auth;
+using UserAccessMgt.Application.DTOs.Common;
 using UserAccessMgt.Application.Interfaces;
 
 namespace UserAccessMgt.Api.Controllers;
@@ -30,12 +32,24 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [Authorize]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var result = await _authService.RegisterAsync(request);
+        if (!User.IsSuperAdmin() && !User.IsInstituteAdmin())
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                ApiResponse<object>.Fail("You are not eligible to register", "NOT_ELIGIBLE_TO_REGISTER"));
+        }
+
+        var result = await _authService.RegisterAsync(request, User.GetInstituteId(), User.IsSuperAdmin());
 
         if (!result.Success)
+        {
+            if (result.ErrorCode == "INSTITUTE_ACCESS_DENIED")
+                return StatusCode(StatusCodes.Status403Forbidden, result);
+
             return BadRequest(result);
+        }
 
         return Ok(result);
     }
