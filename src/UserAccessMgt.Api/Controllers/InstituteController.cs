@@ -31,7 +31,7 @@ public class InstituteController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
         if (!User.CanAccessInstitute(id))
@@ -56,12 +56,43 @@ public class InstituteController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] int skip = 0, [FromQuery] int take = 10)
+    {
+        if (!User.IsSuperAdmin())
+            return SuperAdminRequired("view all institutes");
+
+        var result = await _instituteService.GetPagedAsync(skip, take);
+        return Ok(result);
+    }
+
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllInstitutes()
     {
         if (!User.IsSuperAdmin())
             return SuperAdminRequired("view all institutes");
 
         var result = await _instituteService.GetAllAsync();
+        return Ok(result);
+    }
+
+    [HttpGet("GetInstituteByRole")]
+    public async Task<IActionResult> GetInstituteByRole()
+    {
+        var roleName = User.IsSuperAdmin()
+            ? CurrentUserExtensions.SuperAdminRole
+            : User.IsInstituteAdmin()
+                ? CurrentUserExtensions.InstituteAdminRole
+                : string.Empty;
+
+        var result = await _instituteService.GetInstituteByRoleAsync(roleName, User.GetInstituteId());
+        if (!result.Success)
+        {
+            if (result.ErrorCode == "NOT_FOUND")
+                return NotFound(result);
+
+            return StatusCode(StatusCodes.Status403Forbidden, result);
+        }
+
         return Ok(result);
     }
 

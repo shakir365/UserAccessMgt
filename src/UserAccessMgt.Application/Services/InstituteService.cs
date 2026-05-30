@@ -74,6 +74,58 @@ public class InstituteService : IInstituteService
         return ApiResponse<IEnumerable<InstituteDto>>.Ok(institutes.Select(MapToDto));
     }
 
+    public Task<ApiResponse<PagedInstituteResult>> GetPagedAsync(int skip, int take)
+    {
+        var safeSkip = Math.Max(skip, 0);
+        var safeTake = Math.Clamp(take, 1, 100);
+        var query = _unitOfWork.Repository<Institute>().Query();
+        var totalCount = query.Count();
+        var institutes = query
+            .OrderBy(i => i.InstituteNameEN)
+            .ThenBy(i => i.Code)
+            .Skip(safeSkip)
+            .Take(safeTake)
+            .ToList()
+            .Select(MapToDto)
+            .AsEnumerable();
+
+        return Task.FromResult(ApiResponse<PagedInstituteResult>.Ok(new PagedInstituteResult
+        {
+            Items = institutes,
+            TotalCount = totalCount
+        }));
+    }
+
+    public async Task<ApiResponse<IEnumerable<InstituteDto>>> GetInstituteByRoleAsync(string roleName, int? instituteId)
+    {
+        if (roleName == "SuperAdmin")
+        {
+            return await GetAllAsync();
+        }
+
+        if (roleName != "InstituteAdmin")
+        {
+            return ApiResponse<IEnumerable<InstituteDto>>.Fail(
+                "Only SuperAdmin or InstituteAdmin users can view institutes by role.",
+                "ROLE_NOT_ALLOWED");
+        }
+
+        if (!instituteId.HasValue)
+        {
+            return ApiResponse<IEnumerable<InstituteDto>>.Fail(
+                "Institute id is missing from the current user token.",
+                "INSTITUTE_ID_MISSING");
+        }
+
+        var institute = await _unitOfWork.Repository<Institute>().GetByIdAsync(instituteId.Value);
+        if (institute is null)
+        {
+            return ApiResponse<IEnumerable<InstituteDto>>.Fail("Institute not found", "NOT_FOUND");
+        }
+
+        return ApiResponse<IEnumerable<InstituteDto>>.Ok([MapToDto(institute)]);
+    }
+
     public async Task<ApiResponse<InstituteDto>> UpdateAsync(int id, UpdateInstituteRequest request)
     {
         var institute = await _unitOfWork.Repository<Institute>().GetByIdAsync(id);

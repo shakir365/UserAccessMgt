@@ -20,6 +20,12 @@ public class User
     public int RoleId { get; set; }
     public Role Role { get; set; } = null!;
 
+    public int? GradeId { get; set; }
+    public Grade? Grade { get; set; }
+
+    public int? DesignationId { get; set; }
+    public Designation? Designation { get; set; }
+
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     public ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
     public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();

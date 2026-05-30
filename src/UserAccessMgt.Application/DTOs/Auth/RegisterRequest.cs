@@ -21,4 +21,7 @@ public class RegisterRequest
 
     [Required]
     public string InstituteCode { get; set; } = string.Empty;
+
+    public int? GradeId { get; set; }
+    public int? DesignationId { get; set; }
 }

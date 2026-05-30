@@ -93,20 +93,31 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-var allowedCorsOrigins = builder.Configuration
-    .GetSection("Cors:AllowedOrigins")
-    .Get<string[]>()
-    ?? [
-        "https://bestboy.runasp.net",
-        "http://127.0.0.1:8088",
-        "http://localhost:8088"
-    ];
+//var allowedCorsOrigins = builder.Configuration
+//    .GetSection("Cors:AllowedOrigins")
+//    .Get<string[]>()
+//    ?? [
+//        "https://bestboy.runasp.net",
+//        "http://127.0.0.1:8088",
+//        "http://localhost:8088"
+//    ];
+
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("UserAccessMgtWeb", policy =>
+//    {
+//        policy.WithOrigins(allowedCorsOrigins)
+//            .AllowAnyHeader()
+//            .AllowAnyMethod();
+//    });
+//});
+
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("UserAccessMgtWeb", policy =>
     {
-        policy.WithOrigins(allowedCorsOrigins)
+        policy.AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod();
     });

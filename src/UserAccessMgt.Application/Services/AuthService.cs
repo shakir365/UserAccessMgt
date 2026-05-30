@@ -153,6 +153,26 @@ public class AuthService : IAuthService
                 "INSTITUTE_ACCESS_DENIED");
         }
 
+        Grade? grade = null;
+        if (request.GradeId.HasValue)
+        {
+            grade = await _unitOfWork.Repository<Grade>().GetByIdAsync(request.GradeId.Value);
+            if (grade is null)
+            {
+                return ApiResponse<TokenResponse>.Fail("Invalid grade", "INVALID_GRADE");
+            }
+        }
+
+        Designation? designation = null;
+        if (request.DesignationId.HasValue)
+        {
+            designation = await _unitOfWork.Repository<Designation>().GetByIdAsync(request.DesignationId.Value);
+            if (designation is null)
+            {
+                return ApiResponse<TokenResponse>.Fail("Invalid designation", "INVALID_DESIGNATION");
+            }
+        }
+
         var defaultRole = await _unitOfWork.Repository<Role>()
             .FirstOrDefaultAsync(r => r.Name == "User");
         if (defaultRole is null)
@@ -171,6 +191,8 @@ public class AuthService : IAuthService
             InstituteId = institute.Id,
             RoleId = defaultRole.Id,
             Role = defaultRole,
+            GradeId = grade?.Id,
+            DesignationId = designation?.Id,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };

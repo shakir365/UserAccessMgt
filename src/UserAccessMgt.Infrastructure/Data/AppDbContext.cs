@@ -49,6 +49,16 @@ public class AppDbContext : DbContext
                 .WithMany(r => r.Users)
                 .HasForeignKey(e => e.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Grade)
+                .WithMany(g => g.Users)
+                .HasForeignKey(e => e.GradeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Designation)
+                .WithMany(d => d.Users)
+                .HasForeignKey(e => e.DesignationId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Institute>(entity =>
