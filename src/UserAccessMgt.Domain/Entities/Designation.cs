@@ -14,4 +14,5 @@ public class Designation
     public string DesignationNameBN { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
     public DateTime CreateDate { get; set; } = DateTime.UtcNow;
+    public ICollection<User> Users { get; set; } = new List<User>();
 }

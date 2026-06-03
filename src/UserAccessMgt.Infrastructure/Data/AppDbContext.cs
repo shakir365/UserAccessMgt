@@ -18,6 +18,9 @@ public class AppDbContext : DbContext
     public DbSet<Grade> Grades => Set<Grade>();
     public DbSet<Designation> Designations => Set<Designation>();
     public DbSet<Department> Departments => Set<Department>();
+    public DbSet<Holiday> Holidays => Set<Holiday>();
+    public DbSet<Weekend> Weekends => Set<Weekend>();
+    public DbSet<Shift> Shifts => Set<Shift>();
     public DbSet<Division> Division => Set<Division>();
     public DbSet<District> District => Set<District>();
     public DbSet<Thana> Thana => Set<Thana>();
@@ -27,14 +30,15 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.Email).IsUnique();
-            entity.HasIndex(e => e.Username).IsUnique();
-            entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
-            entity.Property(e => e.Username).HasMaxLength(100).IsRequired();
+            entity.ToTable(t => t.HasCheckConstraint("CK_Users_MobileNumber_BD", "[MobileNumber] LIKE '01[3-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'"));
+            entity.HasIndex(e => e.Email).IsUnique().HasFilter("[Email] IS NOT NULL");
+            entity.HasIndex(e => e.LoginID).IsUnique();
+            entity.Property(e => e.Email).HasMaxLength(255);
+            entity.Property(e => e.LoginID).HasMaxLength(100).IsRequired();
             entity.Property(e => e.PasswordHash).IsRequired();
             entity.Property(e => e.FirstName).HasMaxLength(100);
             entity.Property(e => e.LastName).HasMaxLength(100);
-            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+            entity.Property(e => e.MobileNumber).HasMaxLength(11).IsRequired();
 
             entity.HasOne(e => e.Institute)
                 .WithMany(i => i.Users)
@@ -44,6 +48,16 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(e => e.RoleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Grade)
+                .WithMany(g => g.Users)
+                .HasForeignKey(e => e.GradeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Designation)
+                .WithMany(d => d.Users)
+                .HasForeignKey(e => e.DesignationId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -235,6 +249,42 @@ public class AppDbContext : DbContext
 
             entity.Property(e => e.CreateDate)
                 .IsRequired();
+        });
+
+        modelBuilder.Entity<Holiday>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.HolidayName).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.HolidayDate).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+
+            entity.HasIndex(e => e.HolidayDate).IsUnique();
+        });
+
+        modelBuilder.Entity<Weekend>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable(t => t.HasCheckConstraint("CK_Weekends_DayOfWeek", "[DayOfWeek] BETWEEN 0 AND 6"));
+            entity.Property(e => e.DayOfWeek).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+
+            entity.HasIndex(e => e.DayOfWeek).IsUnique();
+        });
+
+        modelBuilder.Entity<Shift>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.ShiftCode).IsUnique();
+            entity.Property(e => e.ShiftCode).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.ShiftName).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.StartTime).IsRequired();
+            entity.Property(e => e.EndTime).IsRequired();
+            entity.Property(e => e.LateAfterMinutes).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
         });
 
         SeedData(modelBuilder);

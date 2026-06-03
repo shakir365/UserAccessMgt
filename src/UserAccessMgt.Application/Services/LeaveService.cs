@@ -118,14 +118,14 @@ public class LeaveService : ILeaveService
     {
         Id = leave.Id,
         UserId = leave.UserId,
-        UserName = leave.User == null ? string.Empty : leave.User.Username,
+        UserName = leave.User == null ? string.Empty : leave.User.LoginID,
         LeaveType = leave.LeaveType,
         StartDate = leave.StartDate,
         EndDate = leave.EndDate,
         Reason = leave.Reason,
         Status = leave.Status,
         ApprovedById = leave.ApprovedById,
-        ApprovedByName = leave.ApprovedBy == null ? null : leave.ApprovedBy.Username,
+        ApprovedByName = leave.ApprovedBy == null ? null : leave.ApprovedBy.LoginID,
         ApprovedAt = leave.ApprovedAt,
         Comments = leave.Comments,
         CreatedAt = leave.CreatedAt

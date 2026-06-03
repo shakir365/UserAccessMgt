@@ -68,7 +68,10 @@ public class DesignationService : IDesignationService
     public async Task<ApiResponse<IEnumerable<DesignationDto>>> GetAllAsync()
     {
         var designations = await _unitOfWork.Repository<Designation>().GetAllAsync();
-        return ApiResponse<IEnumerable<DesignationDto>>.Ok(designations.Select(MapToDto));
+        return ApiResponse<IEnumerable<DesignationDto>>.Ok(designations
+            .OrderBy(d => d.DesignationNameEN)
+            .ThenBy(d => d.DesignationCode)
+            .Select(MapToDto));
     }
 
     public async Task<ApiResponse<DesignationDto>> UpdateAsync(int id, UpdateDesignationRequest request)

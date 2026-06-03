@@ -17,6 +17,12 @@ public class InstituteDto
     public string? LatitudeLongitude { get; set; }
 }
 
+public class PagedInstituteResult
+{
+    public IEnumerable<InstituteDto> Items { get; set; } = [];
+    public int TotalCount { get; set; }
+}
+
 public class CreateInstituteRequest
 {
     [Required, MinLength(1)]

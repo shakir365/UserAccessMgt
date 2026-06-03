@@ -68,7 +68,9 @@ public class GradeService : IGradeService
     public async Task<ApiResponse<IEnumerable<GradeDto>>> GetAllAsync()
     {
         var grades = await _unitOfWork.Repository<Grade>().GetAllAsync();
-        return ApiResponse<IEnumerable<GradeDto>>.Ok(grades.Select(MapToDto));
+        return ApiResponse<IEnumerable<GradeDto>>.Ok(grades
+            .OrderBy(g => g.Id)
+            .Select(MapToDto));
     }
 
     public async Task<ApiResponse<GradeDto>> UpdateAsync(int id, UpdateGradeRequest request)

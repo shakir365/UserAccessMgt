@@ -3,12 +3,12 @@ namespace UserAccessMgt.Domain.Entities;
 public class User
 {
     public int Id { get; set; }
-    public string Username { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
+    public string LoginID { get; set; } = string.Empty;
+    public string? Email { get; set; }
     public string PasswordHash { get; set; } = string.Empty;
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
-    public string? PhoneNumber { get; set; }
+    public string MobileNumber { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
@@ -19,6 +19,12 @@ public class User
 
     public int RoleId { get; set; }
     public Role Role { get; set; } = null!;
+
+    public int? GradeId { get; set; }
+    public Grade? Grade { get; set; }
+
+    public int? DesignationId { get; set; }
+    public Designation? Designation { get; set; }
 
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     public ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
