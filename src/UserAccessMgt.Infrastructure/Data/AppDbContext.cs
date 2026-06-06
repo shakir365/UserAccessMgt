@@ -14,7 +14,9 @@ public class AppDbContext : DbContext
     public DbSet<LoginHistory> LoginHistories => Set<LoginHistory>();
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+    public DbSet<LeaveType> LeaveTypes => Set<LeaveType>();
     public DbSet<UserTransfer> UserTransfers => Set<UserTransfer>();
+    public DbSet<UserDirectSupervisor> UserDirectSupervisors => Set<UserDirectSupervisor>();
     public DbSet<Grade> Grades => Set<Grade>();
     public DbSet<Designation> Designations => Set<Designation>();
     public DbSet<Department> Departments => Set<Department>();
@@ -24,6 +26,7 @@ public class AppDbContext : DbContext
     public DbSet<Division> Division => Set<Division>();
     public DbSet<District> District => Set<District>();
     public DbSet<Thana> Thana => Set<Thana>();
+    public DbSet<UserDataViewLevel> UserDataViewLevels => Set<UserDataViewLevel>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -80,6 +83,11 @@ public class AppDbContext : DbContext
             entity.HasIndex(e => e.Name).IsUnique();
             entity.Property(e => e.Name).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(255);
+
+            entity.HasOne(e => e.UserDataViewLevel)
+                .WithMany(v => v.Roles)
+                .HasForeignKey(e => e.UserDataViewLevelID)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<RefreshToken>(entity =>
@@ -148,12 +156,42 @@ public class AppDbContext : DbContext
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasOne(e => e.LeaveTypeRecord)
+                .WithMany(t => t.LeaveRequests)
+                .HasForeignKey(e => e.LeaveTypeId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(e => e.SupervisorUser)
+                .WithMany(u => u.SupervisedLeaveRequests)
+                .HasForeignKey(e => e.SupervisorUserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
             entity.HasOne(e => e.ApprovedBy)
                 .WithMany(u => u.ApprovedLeaveRequests)
                 .HasForeignKey(e => e.ApprovedById)
                 .OnDelete(DeleteBehavior.NoAction);
 
             entity.HasIndex(e => e.Status);
+        });
+
+        modelBuilder.Entity<LeaveType>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+            entity.HasIndex(e => e.Name).IsUnique();
+
+            entity.HasData(
+                new LeaveType { Id = 1, Name = "Casual Leave", IsActive = true, CreatedAt = new DateTime(2026, 6, 6) },
+                new LeaveType { Id = 2, Name = "Sick Leave", IsActive = true, CreatedAt = new DateTime(2026, 6, 6) },
+                new LeaveType { Id = 3, Name = "Earned Leave", IsActive = true, CreatedAt = new DateTime(2026, 6, 6) },
+                new LeaveType { Id = 4, Name = "Maternity Leave", IsActive = true, CreatedAt = new DateTime(2026, 6, 6) },
+                new LeaveType { Id = 5, Name = "Paternity Leave", IsActive = true, CreatedAt = new DateTime(2026, 6, 6) },
+                new LeaveType { Id = 6, Name = "Without Pay", IsActive = true, CreatedAt = new DateTime(2026, 6, 6) },
+                new LeaveType { Id = 7, Name = "Other", IsActive = true, CreatedAt = new DateTime(2026, 6, 6) },
+                new LeaveType { Id = 8, Name = "Medical Leave", IsActive = true, CreatedAt = new DateTime(2026, 6, 6) },
+                new LeaveType { Id = 9, Name = "Study Leave", IsActive = true, CreatedAt = new DateTime(2026, 6, 6) },
+                new LeaveType { Id = 10, Name = "Leave Without Pay", IsActive = true, CreatedAt = new DateTime(2026, 6, 6) });
         });
 
         modelBuilder.Entity<UserTransfer>(entity =>
@@ -179,6 +217,30 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.TransferredBy)
                 .WithMany(u => u.TransferredByRecords)
                 .HasForeignKey(e => e.TransferredById)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<UserDirectSupervisor>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.UserID).IsUnique();
+            entity.Property(e => e.ActiveDateFrom).HasColumnType("date").IsRequired();
+            entity.Property(e => e.ExpireDate).HasColumnType("date");
+            entity.Property(e => e.CreateDate);
+
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.DirectSupervisorRecords)
+                .HasForeignKey(e => e.UserID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(e => e.SupervisorUser)
+                .WithMany(u => u.SupervisorForUsers)
+                .HasForeignKey(e => e.Supervisor_UserID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(e => e.CreateByUser)
+                .WithMany(u => u.CreatedDirectSupervisorRecords)
+                .HasForeignKey(e => e.CreateBy_UserID)
                 .OnDelete(DeleteBehavior.NoAction);
         });
 
@@ -287,15 +349,32 @@ public class AppDbContext : DbContext
             entity.Property(e => e.CreatedAt).IsRequired();
         });
 
+        modelBuilder.Entity<UserDataViewLevel>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DataViewLevel).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.RelatedRoleInfo).HasMaxLength(100).IsRequired();
+        });
+
         SeedData(modelBuilder);
     }
 
     private static void SeedData(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Role>().HasData(
-            new Role { Id = 1, Name = "SuperAdmin", Description = "System administrator" },
-            new Role { Id = 2, Name = "InstituteAdmin", Description = "Institute administrator" },
-            new Role { Id = 3, Name = "User", Description = "Regular user" }
+            new Role { Id = 1, Name = "SuperAdmin", Description = "System administrator", UserDataViewLevelID = 1 },
+            new Role { Id = 2, Name = "InstituteAdmin", Description = "Institute administrator", UserDataViewLevelID = 5 },
+            new Role { Id = 3, Name = "User", Description = "Regular user", UserDataViewLevelID = 6 }
+        );
+
+        modelBuilder.Entity<UserDataViewLevel>().HasData(
+            new UserDataViewLevel { Id = 1, DataViewLevel = "All Division", RelatedRoleInfo = "SuperAdmin" },
+            new UserDataViewLevel { Id = 2, DataViewLevel = "Own Division Only", RelatedRoleInfo = "DivisionalAdmin" },
+            new UserDataViewLevel { Id = 3, DataViewLevel = "Own District Only", RelatedRoleInfo = "DisrtictAdmin" },
+            new UserDataViewLevel { Id = 4, DataViewLevel = "Own Thana Only", RelatedRoleInfo = "ThanaAdmin" },
+            new UserDataViewLevel { Id = 5, DataViewLevel = "Own Institute Only", RelatedRoleInfo = "InstituteAdmin" },
+            new UserDataViewLevel { Id = 6, DataViewLevel = "Own Data Only", RelatedRoleInfo = "User" },
+            new UserDataViewLevel { Id = 7, DataViewLevel = "Own Departments All", RelatedRoleInfo = "DepartmentalAdmin" }
         );
     }
 }

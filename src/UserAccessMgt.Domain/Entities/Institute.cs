@@ -18,6 +18,9 @@ public class Institute
     public DateTime? UpdatedAt { get; set; }
     public string? LatitudeLongitude { get; set; } = string.Empty;
 
+    public int? ThanaId { get; set; }
+    public Thana? Thana { get; set; }
+
     public ICollection<User> Users { get; set; } = new List<User>();
     public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
     public ICollection<UserTransfer> FromInstituteTransfers { get; set; } = new List<UserTransfer>();

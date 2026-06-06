@@ -18,6 +18,26 @@ public class LeaveController : ControllerBase
         _leaveService = leaveService;
     }
 
+    [HttpGet("types")]
+    public async Task<IActionResult> GetLeaveTypes()
+    {
+        var result = await _leaveService.GetLeaveTypesAsync();
+        return Ok(result);
+    }
+
+    [HttpGet("supervisor/{userId:int}")]
+    public async Task<IActionResult> GetSupervisor(int userId)
+    {
+        if (!User.CanAccessOwnUser(userId))
+            return Forbid();
+
+        var result = await _leaveService.GetSupervisorForUserAsync(userId);
+        if (!result.Success)
+            return NotFound(result);
+
+        return Ok(result);
+    }
+
     [HttpPost("apply")]
     public async Task<IActionResult> Apply([FromBody] CreateLeaveRequest request)
     {
@@ -31,7 +51,6 @@ public class LeaveController : ControllerBase
     }
 
     [HttpPut("approve/{id}")]
-    [Authorize(Roles = $"{CurrentUserExtensions.SuperAdminRole},{CurrentUserExtensions.InstituteAdminRole}")]
     public async Task<IActionResult> Approve(int id, [FromBody] ApproveLeaveRequest request)
     {
         var approverId = User.GetUserId();
@@ -42,13 +61,29 @@ public class LeaveController : ControllerBase
             id,
             approverId.Value,
             request,
-            User.GetInstituteId(),
             User.IsSuperAdmin());
         if (result.ErrorCode == "FORBIDDEN")
             return Forbid();
 
         if (!result.Success)
             return BadRequest(result);
+        return Ok(result);
+    }
+
+    [HttpPut("cancel/{id}")]
+    public async Task<IActionResult> Cancel(int id, [FromBody] CancelLeaveRequest request)
+    {
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
+            return Unauthorized();
+
+        var result = await _leaveService.CancelAsync(id, userId.Value, request);
+        if (result.ErrorCode == "FORBIDDEN")
+            return Forbid();
+
+        if (!result.Success)
+            return BadRequest(result);
+
         return Ok(result);
     }
 
@@ -73,10 +108,13 @@ public class LeaveController : ControllerBase
     }
 
     [HttpGet("pending")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> GetPending()
     {
-        var result = await _leaveService.GetPendingAsync();
+        var supervisorUserId = User.GetUserId();
+        if (!supervisorUserId.HasValue)
+            return Unauthorized();
+
+        var result = await _leaveService.GetPendingForSupervisorAsync(supervisorUserId.Value, User.IsSuperAdmin());
         return Ok(result);
     }
 

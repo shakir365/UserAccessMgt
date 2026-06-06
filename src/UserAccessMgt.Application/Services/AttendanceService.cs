@@ -51,6 +51,10 @@ public class AttendanceService : IAttendanceService
             return ApiResponse<AttendanceDto>.Fail("Invalid attendance status", "INVALID_STATUS");
 
         var attendanceDate = (request.Date ?? BangladeshNow).Date;
+        var submissionStatus = GetSubmissionStatus(attendanceDate);
+        if (!submissionStatus.IsAllowed)
+            return ApiResponse<AttendanceDto>.Fail(submissionStatus.Message, submissionStatus.ReasonCode);
+
         var existing = await _unitOfWork.Repository<Attendance>()
             .FirstOrDefaultAsync(a => a.UserId == request.UserId && a.Date >= attendanceDate && a.Date < attendanceDate.AddDays(1));
         if (existing is not null)
@@ -64,23 +68,6 @@ public class AttendanceService : IAttendanceService
             await _unitOfWork.SaveChangesAsync();
             return ApiResponse<AttendanceDto>.Ok(GetDto(existing.Id), "Check-out updated successfully");
         }
-
-        var holiday = _unitOfWork.Repository<Holiday>()
-            .Query()
-            .Where(h => h.IsActive
-                && h.HolidayDate == attendanceDate)
-            .Select(h => h.HolidayName)
-            .FirstOrDefault();
-        if (holiday is not null)
-            return ApiResponse<AttendanceDto>.Fail($"Attendance is not allowed on holiday: {holiday}", "HOLIDAY");
-
-        var dayOfWeek = (int)attendanceDate.DayOfWeek;
-        var isWeekend = _unitOfWork.Repository<Weekend>()
-            .Query()
-            .Any(w => w.IsActive
-                && w.DayOfWeek == dayOfWeek);
-        if (isWeekend)
-            return ApiResponse<AttendanceDto>.Fail("Attendance is not allowed on weekend", "WEEKEND");
 
         if (string.IsNullOrWhiteSpace(request.CheckInLatitudeLongitude))
             return ApiResponse<AttendanceDto>.Fail(GpsRequiredMessage, "GPS_REQUIRED");
@@ -178,6 +165,12 @@ public class AttendanceService : IAttendanceService
         return Task.FromResult(ApiResponse<IEnumerable<AttendanceDto>>.Ok(records));
     }
 
+    public Task<ApiResponse<AttendanceSubmissionStatusDto>> GetSubmissionStatusAsync(DateTime? date)
+    {
+        var attendanceDate = (date ?? BangladeshNow).Date;
+        return Task.FromResult(ApiResponse<AttendanceSubmissionStatusDto>.Ok(GetSubmissionStatus(attendanceDate)));
+    }
+
     public async Task<ApiResponse<AttendanceDto>> UpdateAsync(int id, UpdateAttendanceRequest request)
     {
         var attendance = await _unitOfWork.Repository<Attendance>().GetByIdAsync(id);
@@ -214,6 +207,50 @@ public class AttendanceService : IAttendanceService
         await _unitOfWork.SaveChangesAsync();
 
         return ApiResponse<string>.Ok("Attendance deleted successfully");
+    }
+
+    private AttendanceSubmissionStatusDto GetSubmissionStatus(DateTime attendanceDate)
+    {
+        var holiday = _unitOfWork.Repository<Holiday>()
+            .Query()
+            .Where(h => h.IsActive
+                && h.HolidayDate >= attendanceDate
+                && h.HolidayDate < attendanceDate.AddDays(1))
+            .Select(h => h.HolidayName)
+            .FirstOrDefault();
+        if (holiday is not null)
+        {
+            return new AttendanceSubmissionStatusDto
+            {
+                Date = attendanceDate,
+                IsAllowed = false,
+                ReasonCode = "HOLIDAY",
+                Message = $"Attendance submission is not allowed today because it is holiday: {holiday}"
+            };
+        }
+
+        var dayOfWeek = (int)attendanceDate.DayOfWeek;
+        var isWeekend = _unitOfWork.Repository<Weekend>()
+            .Query()
+            .Any(w => w.IsActive
+                && w.DayOfWeek == dayOfWeek);
+        if (isWeekend)
+        {
+            return new AttendanceSubmissionStatusDto
+            {
+                Date = attendanceDate,
+                IsAllowed = false,
+                ReasonCode = "WEEKEND",
+                Message = "Attendance submission is not allowed today because it is weekend"
+            };
+        }
+
+        return new AttendanceSubmissionStatusDto
+        {
+            Date = attendanceDate,
+            IsAllowed = true,
+            Message = "Attendance submission is allowed today"
+        };
     }
 
     private static readonly System.Linq.Expressions.Expression<Func<Attendance, AttendanceDto>> ProjectToDto = attendance => new AttendanceDto

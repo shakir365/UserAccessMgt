@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserAccessMgt.Api.Authorization;
 using UserAccessMgt.Application.DTOs.User;
+using UserAccessMgt.Application.DTOs.UserSupervisor;
 using UserAccessMgt.Application.Interfaces;
 
 namespace UserAccessMgt.Api.Controllers;
@@ -44,6 +45,21 @@ public class UserController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("GetSupervisorByLoginID")]
+    public async Task<IActionResult> GetSupervisorByLoginID([FromQuery] string LoginID)
+    {
+        var result = await _userService.GetSupervisorByLoginIdAsync(LoginID);
+        if (!result.Success)
+        {
+            if (result.ErrorCode == "LOGIN_ID_REQUIRED")
+                return BadRequest(result);
+
+            return NotFound(result);
+        }
+
+        return Ok(result);
+    }
+
     [HttpGet("{loginId}")]
     [Authorize(Roles = CurrentUserExtensions.SuperAdminRole + "," + CurrentUserExtensions.InstituteAdminRole)]
     public async Task<IActionResult> GetByLoginId(string loginId)
@@ -75,6 +91,44 @@ public class UserController : ControllerBase
     public async Task<IActionResult> GetRoles()
     {
         var result = await _userService.GetRolesAsync();
+        return Ok(result);
+    }
+
+    [HttpPost("UserSupervisorSet")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    public async Task<IActionResult> UserSupervisorSet([FromBody] UserSupervisorSetRequest request)
+    {
+        var result = await _userService.UserSupervisorSetAsync(request, User.GetUserId());
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    [HttpGet("UserSupervisorSet")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    public async Task<IActionResult> GetUserSupervisorSet([FromQuery] string LoginID)
+    {
+        var result = await _userService.GetActiveDirectSupervisorByLoginIdAsync(LoginID);
+        if (!result.Success)
+        {
+            if (result.ErrorCode == "LOGIN_ID_REQUIRED")
+                return BadRequest(result);
+
+            return NotFound(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpDelete("UserSupervisorSet/{userId:int}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    public async Task<IActionResult> DeleteUserSupervisorSet(int userId)
+    {
+        var result = await _userService.DeleteUserSupervisorSetAsync(userId);
+        if (!result.Success)
+            return NotFound(result);
+
         return Ok(result);
     }
 

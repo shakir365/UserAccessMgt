@@ -245,6 +245,6 @@ public class AuthService : IAuthService
     private async Task LoadRoleAsync(User user)
     {
         user.Role = await _unitOfWork.Repository<Role>().GetByIdAsync(user.RoleId)
-            ?? new Role { Id = user.RoleId, Name = "User" };
+            ?? new Role { Id = user.RoleId, Name = "User", UserDataViewLevelID = 6 };
     }
 }
