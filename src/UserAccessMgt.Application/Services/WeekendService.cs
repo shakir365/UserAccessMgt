@@ -56,7 +56,14 @@ public class WeekendService : IWeekendService
             return ApiResponse<WeekendDto>.Fail("Weekend not found", "NOT_FOUND");
 
         if (request.DayOfWeek.HasValue)
+        {
+            var existing = await _unitOfWork.Repository<Weekend>()
+                .FirstOrDefaultAsync(w => w.Id != id && w.DayOfWeek == request.DayOfWeek.Value);
+            if (existing is not null)
+                return ApiResponse<WeekendDto>.Fail("Weekend already exists for this day", "WEEKEND_EXISTS");
+
             weekend.DayOfWeek = request.DayOfWeek.Value;
+        }
         if (request.IsActive.HasValue)
             weekend.IsActive = request.IsActive.Value;
         weekend.UpdatedAt = DateTime.UtcNow;
