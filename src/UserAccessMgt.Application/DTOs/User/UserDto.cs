@@ -15,6 +15,9 @@ public class UserDto
     public string InstituteName { get; set; } = string.Empty;
     public int RoleId { get; set; }
     public string RoleName { get; set; } = string.Empty;
+    public int? UserDataViewLevelID { get; set; }
+    public string? DataViewLevel { get; set; }
+    public string? RelatedRoleInfo { get; set; }
     public int? GradeId { get; set; }
     public string? GradeName { get; set; }
     public int? DesignationId { get; set; }
@@ -39,6 +42,9 @@ public class UserRoleDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public int? UserDataViewLevelID { get; set; }
+    public string? DataViewLevel { get; set; }
+    public string? RelatedRoleInfo { get; set; }
 }
 
 public class ChangeMyPasswordRequest

@@ -85,6 +85,13 @@ public class AttendanceController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("submission-status")]
+    public async Task<IActionResult> GetSubmissionStatus([FromQuery] DateTime? date)
+    {
+        var result = await _attendanceService.GetSubmissionStatusAsync(date);
+        return Ok(result);
+    }
+
     [HttpPut("{id}")]
     [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateAttendanceRequest request)

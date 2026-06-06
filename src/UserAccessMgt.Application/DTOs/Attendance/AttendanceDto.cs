@@ -20,6 +20,14 @@ public class AttendanceDto
     public string SubmittedByUserName { get; set; } = string.Empty;
 }
 
+public class AttendanceSubmissionStatusDto
+{
+    public DateTime Date { get; set; }
+    public bool IsAllowed { get; set; }
+    public string? ReasonCode { get; set; }
+    public string Message { get; set; } = string.Empty;
+}
+
 public class CreateAttendanceRequest
 {
     [Range(1, int.MaxValue)]

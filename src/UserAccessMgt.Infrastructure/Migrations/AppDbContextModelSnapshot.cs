@@ -364,6 +364,9 @@ namespace UserAccessMgt.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("LeaveTypeId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -377,6 +380,9 @@ namespace UserAccessMgt.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int?>("SupervisorUserId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -387,11 +393,116 @@ namespace UserAccessMgt.Infrastructure.Migrations
 
                     b.HasIndex("ApprovedById");
 
+                    b.HasIndex("LeaveTypeId");
+
                     b.HasIndex("Status");
+
+                    b.HasIndex("SupervisorUserId");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("LeaveRequests");
+                });
+
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.LeaveType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("LeaveTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2026, 6, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Name = "Casual Leave"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2026, 6, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Name = "Sick Leave"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(2026, 6, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Name = "Earned Leave"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CreatedAt = new DateTime(2026, 6, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Name = "Maternity Leave"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CreatedAt = new DateTime(2026, 6, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Name = "Paternity Leave"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CreatedAt = new DateTime(2026, 6, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Name = "Without Pay"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CreatedAt = new DateTime(2026, 6, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Name = "Other"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CreatedAt = new DateTime(2026, 6, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Name = "Medical Leave"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            CreatedAt = new DateTime(2026, 6, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Name = "Study Leave"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            CreatedAt = new DateTime(2026, 6, 6, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Name = "Leave Without Pay"
+                        });
                 });
 
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.LoginHistory", b =>
@@ -486,10 +597,15 @@ namespace UserAccessMgt.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("UserDataViewLevelID")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
                         .IsUnique();
+
+                    b.HasIndex("UserDataViewLevelID");
 
                     b.ToTable("Roles");
 
@@ -498,19 +614,22 @@ namespace UserAccessMgt.Infrastructure.Migrations
                         {
                             Id = 1,
                             Description = "System administrator",
-                            Name = "SuperAdmin"
+                            Name = "SuperAdmin",
+                            UserDataViewLevelID = 1
                         },
                         new
                         {
                             Id = 2,
                             Description = "Institute administrator",
-                            Name = "InstituteAdmin"
+                            Name = "InstituteAdmin",
+                            UserDataViewLevelID = 5
                         },
                         new
                         {
                             Id = 3,
                             Description = "Regular user",
-                            Name = "User"
+                            Name = "User",
+                            UserDataViewLevelID = 6
                         });
                 });
 
@@ -667,6 +786,111 @@ namespace UserAccessMgt.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.UserDataViewLevel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DataViewLevel")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("RelatedRoleInfo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserDataViewLevels");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DataViewLevel = "All Division",
+                            RelatedRoleInfo = "SuperAdmin"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            DataViewLevel = "Own Division Only",
+                            RelatedRoleInfo = "DivisionalAdmin"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            DataViewLevel = "Own District Only",
+                            RelatedRoleInfo = "DisrtictAdmin"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            DataViewLevel = "Own Thana Only",
+                            RelatedRoleInfo = "ThanaAdmin"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            DataViewLevel = "Own Institute Only",
+                            RelatedRoleInfo = "InstituteAdmin"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            DataViewLevel = "Own Data Only",
+                            RelatedRoleInfo = "User"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            DataViewLevel = "Own Departments All",
+                            RelatedRoleInfo = "DepartmentalAdmin"
+                        });
+                });
+
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.UserDirectSupervisor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ActiveDateFrom")
+                        .HasColumnType("date");
+
+                    b.Property<int?>("CreateBy_UserID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ExpireDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Supervisor_UserID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreateBy_UserID");
+
+                    b.HasIndex("Supervisor_UserID");
+
+                    b.HasIndex("UserID")
+                        .IsUnique();
+
+                    b.ToTable("UserDirectSupervisors");
+                });
+
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.UserTransfer", b =>
                 {
                     b.Property<int>("Id")
@@ -781,9 +1005,11 @@ namespace UserAccessMgt.Infrastructure.Migrations
 
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.Institute", b =>
                 {
-                    b.HasOne("UserAccessMgt.Domain.Entities.Thana", null)
+                    b.HasOne("UserAccessMgt.Domain.Entities.Thana", "Thana")
                         .WithMany("Institutes")
                         .HasForeignKey("ThanaId");
+
+                    b.Navigation("Thana");
                 });
 
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.LeaveRequest", b =>
@@ -791,6 +1017,16 @@ namespace UserAccessMgt.Infrastructure.Migrations
                     b.HasOne("UserAccessMgt.Domain.Entities.User", "ApprovedBy")
                         .WithMany("ApprovedLeaveRequests")
                         .HasForeignKey("ApprovedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("UserAccessMgt.Domain.Entities.LeaveType", "LeaveTypeRecord")
+                        .WithMany("LeaveRequests")
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("UserAccessMgt.Domain.Entities.User", "SupervisorUser")
+                        .WithMany("SupervisedLeaveRequests")
+                        .HasForeignKey("SupervisorUserId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("UserAccessMgt.Domain.Entities.User", "User")
@@ -801,7 +1037,16 @@ namespace UserAccessMgt.Infrastructure.Migrations
 
                     b.Navigation("ApprovedBy");
 
+                    b.Navigation("LeaveTypeRecord");
+
+                    b.Navigation("SupervisorUser");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.LeaveType", b =>
+                {
+                    b.Navigation("LeaveRequests");
                 });
 
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.LoginHistory", b =>
@@ -824,6 +1069,16 @@ namespace UserAccessMgt.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.Role", b =>
+                {
+                    b.HasOne("UserAccessMgt.Domain.Entities.UserDataViewLevel", "UserDataViewLevel")
+                        .WithMany("Roles")
+                        .HasForeignKey("UserDataViewLevelID")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("UserDataViewLevel");
                 });
 
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.Thana", b =>
@@ -868,6 +1123,32 @@ namespace UserAccessMgt.Infrastructure.Migrations
                     b.Navigation("Institute");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.UserDirectSupervisor", b =>
+                {
+                    b.HasOne("UserAccessMgt.Domain.Entities.User", "CreateByUser")
+                        .WithMany("CreatedDirectSupervisorRecords")
+                        .HasForeignKey("CreateBy_UserID")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("UserAccessMgt.Domain.Entities.User", "SupervisorUser")
+                        .WithMany("SupervisorForUsers")
+                        .HasForeignKey("Supervisor_UserID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("UserAccessMgt.Domain.Entities.User", "User")
+                        .WithMany("DirectSupervisorRecords")
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CreateByUser");
+
+                    b.Navigation("SupervisorUser");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("UserAccessMgt.Domain.Entities.UserTransfer", b =>
@@ -952,6 +1233,10 @@ namespace UserAccessMgt.Infrastructure.Migrations
 
                     b.Navigation("Attendances");
 
+                    b.Navigation("CreatedDirectSupervisorRecords");
+
+                    b.Navigation("DirectSupervisorRecords");
+
                     b.Navigation("LeaveRequests");
 
                     b.Navigation("LoginHistories");
@@ -960,9 +1245,18 @@ namespace UserAccessMgt.Infrastructure.Migrations
 
                     b.Navigation("SubmittedAttendances");
 
+                    b.Navigation("SupervisedLeaveRequests");
+
+                    b.Navigation("SupervisorForUsers");
+
                     b.Navigation("TransferredByRecords");
 
                     b.Navigation("UserTransfers");
+                });
+
+            modelBuilder.Entity("UserAccessMgt.Domain.Entities.UserDataViewLevel", b =>
+                {
+                    b.Navigation("Roles");
                 });
 #pragma warning restore 612, 618
         }

@@ -31,7 +31,11 @@ public class User
     public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
     public ICollection<Attendance> SubmittedAttendances { get; set; } = new List<Attendance>();
     public ICollection<LeaveRequest> LeaveRequests { get; set; } = new List<LeaveRequest>();
+    public ICollection<LeaveRequest> SupervisedLeaveRequests { get; set; } = new List<LeaveRequest>();
     public ICollection<LeaveRequest> ApprovedLeaveRequests { get; set; } = new List<LeaveRequest>();
     public ICollection<UserTransfer> UserTransfers { get; set; } = new List<UserTransfer>();
     public ICollection<UserTransfer> TransferredByRecords { get; set; } = new List<UserTransfer>();
+    public ICollection<UserDirectSupervisor> DirectSupervisorRecords { get; set; } = new List<UserDirectSupervisor>();
+    public ICollection<UserDirectSupervisor> SupervisorForUsers { get; set; } = new List<UserDirectSupervisor>();
+    public ICollection<UserDirectSupervisor> CreatedDirectSupervisorRecords { get; set; } = new List<UserDirectSupervisor>();
 }
