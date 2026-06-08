@@ -61,7 +61,15 @@ public class HolidayService : IHolidayService
         if (request.HolidayName is not null)
             holiday.HolidayName = request.HolidayName.Trim();
         if (request.HolidayDate.HasValue)
-            holiday.HolidayDate = request.HolidayDate.Value.Date;
+        {
+            var holidayDate = request.HolidayDate.Value.Date;
+            var existing = await _unitOfWork.Repository<Holiday>()
+                .FirstOrDefaultAsync(h => h.Id != id && h.HolidayDate == holidayDate);
+            if (existing is not null)
+                return ApiResponse<HolidayDto>.Fail("Holiday already exists for this date", "HOLIDAY_EXISTS");
+
+            holiday.HolidayDate = holidayDate;
+        }
         if (request.Description is not null)
             holiday.Description = request.Description.Trim();
         if (request.IsActive.HasValue)

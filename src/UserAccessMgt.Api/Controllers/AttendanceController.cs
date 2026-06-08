@@ -47,6 +47,18 @@ public class AttendanceController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("institute/{instituteId}/range")]
+    public async Task<IActionResult> GetByInstituteAndDateRange(int instituteId, [FromQuery] DateTime from, [FromQuery] DateTime to)
+    {
+        if (!User.CanAccessInstitute(instituteId))
+            return Forbid();
+
+        var result = await _attendanceService.GetByInstituteAndDateRangeAsync(instituteId, from, to);
+        if (!result.Success)
+            return BadRequest(result);
+        return Ok(result);
+    }
+
     [HttpGet("{id}")]
     [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
     public async Task<IActionResult> GetById(int id)
@@ -89,6 +101,32 @@ public class AttendanceController : ControllerBase
     public async Task<IActionResult> GetSubmissionStatus([FromQuery] DateTime? date)
     {
         var result = await _attendanceService.GetSubmissionStatusAsync(date);
+        return Ok(result);
+    }
+
+    [HttpGet("analytics")]
+    public async Task<IActionResult> GetAnalyticalReport([FromQuery] AttendanceAnalyticalReportRequest request)
+    {
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
+            return Unauthorized();
+
+        var result = await _attendanceService.GetAnalyticalReportAsync(request, userId.Value);
+        if (!result.Success)
+            return BadRequest(result);
+        return Ok(result);
+    }
+
+    [HttpGet("personal-analytics")]
+    public async Task<IActionResult> GetPersonalAnalyticalReport([FromQuery] AttendanceAnalyticalReportRequest request)
+    {
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
+            return Unauthorized();
+
+        var result = await _attendanceService.GetPersonalAnalyticalReportAsync(request, userId.Value);
+        if (!result.Success)
+            return BadRequest(result);
         return Ok(result);
     }
 
