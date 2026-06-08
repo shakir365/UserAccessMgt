@@ -26,13 +26,15 @@ public class AuthService : IAuthService
 
         if (user is null || !_passwordService.VerifyPassword(request.Password, user.PasswordHash))
         {
-            await RecordLoginHistory(null, loginId, ipAddress, userAgent, false, "Invalid credentials");
+            // Login history generation is temporarily disabled.
+            // await RecordLoginHistory(null, loginId, ipAddress, userAgent, false, "Invalid credentials");
             return ApiResponse<TokenResponse>.Fail("Invalid login ID or password", "INVALID_CREDENTIALS");
         }
 
         if (!user.IsActive)
         {
-            await RecordLoginHistory(user.Id, loginId, ipAddress, userAgent, false, "Account deactivated");
+            // Login history generation is temporarily disabled.
+            // await RecordLoginHistory(user.Id, loginId, ipAddress, userAgent, false, "Account deactivated");
             return ApiResponse<TokenResponse>.Fail("Account is deactivated", "ACCOUNT_DEACTIVATED");
         }
 
@@ -51,7 +53,8 @@ public class AuthService : IAuthService
         user.LastLoginAt = DateTime.UtcNow;
         _unitOfWork.Repository<User>().Update(user);
 
-        await RecordLoginHistory(user.Id, loginId, ipAddress, userAgent, true, null);
+        // Login history generation is temporarily disabled.
+        // await RecordLoginHistory(user.Id, loginId, ipAddress, userAgent, true, null);
 
         await _unitOfWork.SaveChangesAsync();
 
@@ -222,24 +225,26 @@ public class AuthService : IAuthService
 
     private async Task RecordLoginHistory(int? userId, string? loginId, string? ipAddress, string? userAgent, bool isSuccessful, string? failureReason)
     {
-        if (!userId.HasValue)
-        {
-            var user = await _unitOfWork.Repository<User>().FirstOrDefaultAsync(u => u.LoginID == loginId);
-            userId = user?.Id;
-        }
-
-        if (userId.HasValue)
-        {
-            await _unitOfWork.Repository<LoginHistory>().AddAsync(new LoginHistory
-            {
-                UserId = userId.Value,
-                LoginAt = DateTime.UtcNow,
-                IpAddress = ipAddress,
-                UserAgent = userAgent,
-                IsSuccessful = isSuccessful,
-                FailureReason = failureReason
-            });
-        }
+        // Login history generation is temporarily disabled.
+        // if (!userId.HasValue)
+        // {
+        //     var user = await _unitOfWork.Repository<User>().FirstOrDefaultAsync(u => u.LoginID == loginId);
+        //     userId = user?.Id;
+        // }
+        //
+        // if (userId.HasValue)
+        // {
+        //     await _unitOfWork.Repository<LoginHistory>().AddAsync(new LoginHistory
+        //     {
+        //         UserId = userId.Value,
+        //         LoginAt = DateTime.UtcNow,
+        //         IpAddress = ipAddress,
+        //         UserAgent = userAgent,
+        //         IsSuccessful = isSuccessful,
+        //         FailureReason = failureReason
+        //     });
+        // }
+        await Task.CompletedTask;
     }
 
     private async Task LoadRoleAsync(User user)
