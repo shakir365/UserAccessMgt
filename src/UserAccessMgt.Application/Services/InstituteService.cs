@@ -29,6 +29,9 @@ public class InstituteService : IInstituteService
         if (existing is not null)
             return ApiResponse<InstituteDto>.Fail("Institute code already exists", "CODE_EXISTS");
 
+        if (request.ThanaId.HasValue && !await ThanaExistsAsync(request.ThanaId.Value))
+            return ApiResponse<InstituteDto>.Fail("Thana not found", "THANA_NOT_FOUND");
+
         var institute = new Institute
         {
             Code = code,
@@ -38,6 +41,7 @@ public class InstituteService : IInstituteService
             PhoneNumber = request.PhoneNumber?.Trim(),
             Email = request.Email?.Trim(),
             LatitudeLongitude = request.LatitudeLongitude?.Trim(),
+            ThanaId = request.ThanaId,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
@@ -45,33 +49,42 @@ public class InstituteService : IInstituteService
         await _unitOfWork.Repository<Institute>().AddAsync(institute);
         await _unitOfWork.SaveChangesAsync();
 
-        return ApiResponse<InstituteDto>.Ok(MapToDto(institute), "Institute created successfully");
+        var createdInstitute = GetInstituteDtoQuery()
+            .FirstOrDefault(i => i.Id == institute.Id);
+
+        return ApiResponse<InstituteDto>.Ok(createdInstitute ?? MapToDto(institute), "Institute created successfully");
     }
 
-    public async Task<ApiResponse<InstituteDto>> GetByIdAsync(int id)
+    public Task<ApiResponse<InstituteDto>> GetByIdAsync(int id)
     {
-        var institute = await _unitOfWork.Repository<Institute>().GetByIdAsync(id);
+        var institute = GetInstituteDtoQuery()
+            .FirstOrDefault(i => i.Id == id);
         if (institute is null)
-            return ApiResponse<InstituteDto>.Fail("Institute not found", "NOT_FOUND");
+            return Task.FromResult(ApiResponse<InstituteDto>.Fail("Institute not found", "NOT_FOUND"));
 
-        return ApiResponse<InstituteDto>.Ok(MapToDto(institute));
+        return Task.FromResult(ApiResponse<InstituteDto>.Ok(institute));
     }
 
-    public async Task<ApiResponse<InstituteDto>> GetByCodeAsync(string code)
+    public Task<ApiResponse<InstituteDto>> GetByCodeAsync(string code)
     {
-        var institute = await _unitOfWork.Repository<Institute>()
-            .FirstOrDefaultAsync(i => i.Code == code);
+        var institute = GetInstituteDtoQuery()
+            .FirstOrDefault(i => i.Code == code);
 
         if (institute is null)
-            return ApiResponse<InstituteDto>.Fail("Institute not found", "NOT_FOUND");
+            return Task.FromResult(ApiResponse<InstituteDto>.Fail("Institute not found", "NOT_FOUND"));
 
-        return ApiResponse<InstituteDto>.Ok(MapToDto(institute));
+        return Task.FromResult(ApiResponse<InstituteDto>.Ok(institute));
     }
 
-    public async Task<ApiResponse<IEnumerable<InstituteDto>>> GetAllAsync()
+    public Task<ApiResponse<IEnumerable<InstituteDto>>> GetAllAsync()
     {
-        var institutes = await _unitOfWork.Repository<Institute>().GetAllAsync();
-        return ApiResponse<IEnumerable<InstituteDto>>.Ok(institutes.Select(MapToDto));
+        var institutes = GetInstituteDtoQuery()
+            .OrderBy(i => i.InstituteNameEN)
+            .ThenBy(i => i.Code)
+            .ToList()
+            .AsEnumerable();
+
+        return Task.FromResult(ApiResponse<IEnumerable<InstituteDto>>.Ok(institutes));
     }
 
     public Task<ApiResponse<PagedInstituteResult>> GetPagedAsync(int skip, int take)
@@ -80,13 +93,12 @@ public class InstituteService : IInstituteService
         var safeTake = Math.Clamp(take, 1, 100);
         var query = _unitOfWork.Repository<Institute>().Query();
         var totalCount = query.Count();
-        var institutes = query
+        var institutes = GetInstituteDtoQuery()
             .OrderBy(i => i.InstituteNameEN)
             .ThenBy(i => i.Code)
             .Skip(safeSkip)
             .Take(safeTake)
             .ToList()
-            .Select(MapToDto)
             .AsEnumerable();
 
         return Task.FromResult(ApiResponse<PagedInstituteResult>.Ok(new PagedInstituteResult
@@ -117,13 +129,14 @@ public class InstituteService : IInstituteService
                 "INSTITUTE_ID_MISSING");
         }
 
-        var institute = await _unitOfWork.Repository<Institute>().GetByIdAsync(instituteId.Value);
+        var institute = GetInstituteDtoQuery()
+            .FirstOrDefault(i => i.Id == instituteId.Value);
         if (institute is null)
         {
             return ApiResponse<IEnumerable<InstituteDto>>.Fail("Institute not found", "NOT_FOUND");
         }
 
-        return ApiResponse<IEnumerable<InstituteDto>>.Ok([MapToDto(institute)]);
+        return ApiResponse<IEnumerable<InstituteDto>>.Ok([institute]);
     }
 
     public async Task<ApiResponse<InstituteDto>> UpdateAsync(int id, UpdateInstituteRequest request)
@@ -131,6 +144,14 @@ public class InstituteService : IInstituteService
         var institute = await _unitOfWork.Repository<Institute>().GetByIdAsync(id);
         if (institute is null)
             return ApiResponse<InstituteDto>.Fail("Institute not found", "NOT_FOUND");
+
+        if (request.ThanaId.HasValue)
+        {
+            if (!await ThanaExistsAsync(request.ThanaId.Value))
+                return ApiResponse<InstituteDto>.Fail("Thana not found", "THANA_NOT_FOUND");
+
+            institute.ThanaId = request.ThanaId.Value;
+        }
 
         if (request.InstituteNameEN is not null)
         {
@@ -151,7 +172,10 @@ public class InstituteService : IInstituteService
         _unitOfWork.Repository<Institute>().Update(institute);
         await _unitOfWork.SaveChangesAsync();
 
-        return ApiResponse<InstituteDto>.Ok(MapToDto(institute), "Institute updated successfully");
+        var updatedInstitute = GetInstituteDtoQuery()
+            .FirstOrDefault(i => i.Id == institute.Id);
+
+        return ApiResponse<InstituteDto>.Ok(updatedInstitute ?? MapToDto(institute), "Institute updated successfully");
     }
 
     public async Task<ApiResponse<string>> DeleteAsync(int id)
@@ -166,6 +190,38 @@ public class InstituteService : IInstituteService
         return ApiResponse<string>.Ok("Institute deleted successfully");
     }
 
+    private IQueryable<InstituteDto> GetInstituteDtoQuery()
+        => _unitOfWork.Repository<Institute>()
+            .Query()
+            .Select(i => new InstituteDto
+            {
+                Id = i.Id,
+                Code = i.Code,
+                InstituteNameEN = i.InstituteNameEN,
+                InstituteNameBN = i.InstituteNameBN,
+                Address = i.Address,
+                PhoneNumber = i.PhoneNumber,
+                Email = i.Email,
+                IsActive = i.IsActive,
+                CreatedAt = i.CreatedAt,
+                UpdatedAt = i.UpdatedAt,
+                LatitudeLongitude = i.LatitudeLongitude,
+                DivisionId = i.Thana == null ? null : (int?)i.Thana.District.DivisionId,
+                DivisionNameEN = i.Thana == null ? null : i.Thana.District.Division.DivisionNameEN,
+                DivisionNameBN = i.Thana == null ? null : i.Thana.District.Division.DivisionNameBN,
+                DistrictId = i.Thana == null ? null : (int?)i.Thana.DistrictId,
+                DistrictNameEN = i.Thana == null ? null : i.Thana.District.DistrictNameEN,
+                DistrictNameBN = i.Thana == null ? null : i.Thana.District.DistrictNameBN,
+                ThanaId = i.ThanaId,
+                ThanaNameEN = i.Thana == null ? null : i.Thana.ThanaNameEN,
+                ThanaNameBN = i.Thana == null ? null : i.Thana.ThanaNameBN
+            });
+
+    private Task<bool> ThanaExistsAsync(int thanaId)
+        => Task.FromResult(_unitOfWork.Repository<Thana>()
+            .Query()
+            .Any(t => t.ThanaId == thanaId));
+
     private static InstituteDto MapToDto(Institute institute) => new()
     {
         Id = institute.Id,
@@ -178,6 +234,15 @@ public class InstituteService : IInstituteService
         IsActive = institute.IsActive,
         CreatedAt = institute.CreatedAt,
         UpdatedAt = institute.UpdatedAt,
-        LatitudeLongitude = institute.LatitudeLongitude
+        LatitudeLongitude = institute.LatitudeLongitude,
+        DivisionId = institute.Thana?.District?.DivisionId,
+        DivisionNameEN = institute.Thana?.District?.Division?.DivisionNameEN,
+        DivisionNameBN = institute.Thana?.District?.Division?.DivisionNameBN,
+        DistrictId = institute.Thana?.DistrictId,
+        DistrictNameEN = institute.Thana?.District?.DistrictNameEN,
+        DistrictNameBN = institute.Thana?.District?.DistrictNameBN,
+        ThanaId = institute.ThanaId,
+        ThanaNameEN = institute.Thana?.ThanaNameEN,
+        ThanaNameBN = institute.Thana?.ThanaNameBN
     };
 }

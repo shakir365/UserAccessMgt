@@ -104,7 +104,13 @@ public class InstituteController : ControllerBase
 
         var result = await _instituteService.UpdateAsync(id, request);
         if (!result.Success)
-            return NotFound(result);
+        {
+            if (result.ErrorCode == "NOT_FOUND")
+                return NotFound(result);
+
+            return BadRequest(result);
+        }
+
         return Ok(result);
     }
 
