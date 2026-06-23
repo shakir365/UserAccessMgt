@@ -51,6 +51,7 @@ public class CreateInstituteRequest
 
 public class UpdateInstituteRequest
 {
+    public string? Code { get; set; }
     public string? InstituteNameEN { get; set; }
     public string? InstituteNameBN { get; set; }
     public string? Address { get; set; }

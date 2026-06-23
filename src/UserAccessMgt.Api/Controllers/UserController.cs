@@ -170,7 +170,7 @@ public class UserController : ControllerBase
         var result = await _userService.UpdateAsync(id, request);
         if (!result.Success)
         {
-            if (result.ErrorCode is "INVALID_GRADE" or "INVALID_DESIGNATION" or "INVALID_INSTITUTE" or "INVALID_ROLE")
+            if (result.ErrorCode is "LOGIN_ID_REQUIRED" or "LOGIN_ID_EXISTS" or "INVALID_GRADE" or "INVALID_DESIGNATION" or "INVALID_INSTITUTE" or "INVALID_ROLE")
                 return BadRequest(result);
 
             return NotFound(result);

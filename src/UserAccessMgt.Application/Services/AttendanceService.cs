@@ -16,6 +16,7 @@ public class AttendanceService : IAttendanceService
     private const int OwnDataLevelId = 6;
     private const int OwnDepartmentsLevelId = 7;
     private const string GpsRequiredMessage = "Unable to read GPS latitude-longitude. Please allow Location permission and try again.";
+    private static readonly TimeSpan LateCheckInCutoff = new(9, 0, 0);
     private static readonly string[] ValidStatuses = ["Present", "Absent", "Late", "OnLeave"];
     private static readonly TimeZoneInfo _bdTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
         TryGetTimeZoneId("Bangladesh Standard Time", "Asia/Dhaka"));
@@ -81,16 +82,7 @@ public class AttendanceService : IAttendanceService
 
         var now = BangladeshNow;
         var checkInTime = request.CheckInTime ?? now;
-        if (status == "Present")
-        {
-            var shift = _unitOfWork.Repository<Shift>()
-                .Query()
-                .Where(s => s.IsActive)
-                .OrderBy(s => s.StartTime)
-                .FirstOrDefault();
-            if (shift is not null && checkInTime.TimeOfDay > shift.StartTime.Add(TimeSpan.FromMinutes(shift.LateAfterMinutes)))
-                status = "Late";
-        }
+        status = NormalizeStatusForCheckIn(status, checkInTime);
 
         var attendance = new Attendance
         {
@@ -123,6 +115,7 @@ public class AttendanceService : IAttendanceService
         if (attendance is null)
             return Task.FromResult(ApiResponse<AttendanceDto>.Fail("Attendance not found", "NOT_FOUND"));
 
+        NormalizeAttendanceStatus(attendance);
         return Task.FromResult(ApiResponse<AttendanceDto>.Ok(attendance));
     }
 
@@ -133,6 +126,7 @@ public class AttendanceService : IAttendanceService
             .Where(a => a.UserId == userId)
             .Select(ProjectToDto)
             .ToList();
+        NormalizeAttendanceStatuses(records);
         return Task.FromResult(ApiResponse<IEnumerable<AttendanceDto>>.Ok(records));
     }
 
@@ -144,6 +138,7 @@ public class AttendanceService : IAttendanceService
             .Where(a => a.Date >= attendanceDate && a.Date < attendanceDate.AddDays(1))
             .Select(ProjectToDto)
             .ToList();
+        NormalizeAttendanceStatuses(records);
         return Task.FromResult(ApiResponse<IEnumerable<AttendanceDto>>.Ok(records));
     }
 
@@ -154,6 +149,7 @@ public class AttendanceService : IAttendanceService
             .Where(a => a.InstituteId == instituteId)
             .Select(ProjectToDto)
             .ToList();
+        NormalizeAttendanceStatuses(records);
         return Task.FromResult(ApiResponse<IEnumerable<AttendanceDto>>.Ok(records));
     }
 
@@ -180,14 +176,16 @@ public class AttendanceService : IAttendanceService
             return Task.FromResult(ApiResponse<IEnumerable<AttendanceDto>>.Ok([]));
 
         var userIds = users.Select(u => u.Id).ToList();
-        var attendanceByUserDate = _unitOfWork.Repository<Attendance>()
+        var attendanceRecords = _unitOfWork.Repository<Attendance>()
             .Query()
             .Where(a => a.InstituteId == instituteId
                 && userIds.Contains(a.UserId)
                 && a.Date >= fromDate
                 && a.Date < toDateExclusive)
             .Select(ProjectToDto)
-            .ToList()
+            .ToList();
+        NormalizeAttendanceStatuses(attendanceRecords);
+        var attendanceByUserDate = attendanceRecords
             .GroupBy(a => (a.UserId, Date: a.Date.Date))
             .ToDictionary(g => g.Key, g => g.OrderByDescending(a => a.Id).First());
 
@@ -265,11 +263,13 @@ public class AttendanceService : IAttendanceService
         if (user is null)
             return Task.FromResult(ApiResponse<IEnumerable<AttendanceDto>>.Fail("User not found", "NOT_FOUND"));
 
-        var attendanceByDate = _unitOfWork.Repository<Attendance>()
+        var attendanceRecords = _unitOfWork.Repository<Attendance>()
             .Query()
             .Where(a => a.UserId == userId && a.Date >= fromDate && a.Date < toDateExclusive)
             .Select(ProjectToDto)
-            .ToList()
+            .ToList();
+        NormalizeAttendanceStatuses(attendanceRecords);
+        var attendanceByDate = attendanceRecords
             .GroupBy(a => a.Date.Date)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(a => a.Id).First());
 
@@ -413,17 +413,19 @@ public class AttendanceService : IAttendanceService
 
         var userIds = users.Select(u => u.UserId).ToList();
         var toDateExclusive = toDate.AddDays(1);
-        var attendanceByUserDate = userIds.Count == 0
-            ? new Dictionary<(int UserId, DateTime Date), AttendanceDto>()
+        var attendanceRecords = userIds.Count == 0
+            ? new List<AttendanceDto>()
             : _unitOfWork.Repository<Attendance>()
                 .Query()
                 .Where(a => userIds.Contains(a.UserId)
                     && a.Date >= fromDate
                     && a.Date < toDateExclusive)
                 .Select(ProjectToDto)
-                .ToList()
-                .GroupBy(a => (a.UserId, Date: a.Date.Date))
-                .ToDictionary(g => g.Key, g => g.OrderByDescending(a => a.Id).First());
+                .ToList();
+        NormalizeAttendanceStatuses(attendanceRecords);
+        var attendanceByUserDate = attendanceRecords
+            .GroupBy(a => (a.UserId, Date: a.Date.Date))
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(a => a.Id).First());
 
         var leaveByUserDate = userIds.Count == 0
             ? new Dictionary<(int UserId, DateTime Date), string>()
@@ -546,13 +548,15 @@ public class AttendanceService : IAttendanceService
 
         var userIds = users.Select(u => u.UserId).ToList();
         var toDateExclusive = toDate.AddDays(1);
-        var attendanceByUserDate = _unitOfWork.Repository<Attendance>()
+        var attendanceRecords = _unitOfWork.Repository<Attendance>()
             .Query()
             .Where(a => userIds.Contains(a.UserId)
                 && a.Date >= fromDate
                 && a.Date < toDateExclusive)
             .Select(ProjectToDto)
-            .ToList()
+            .ToList();
+        NormalizeAttendanceStatuses(attendanceRecords);
+        var attendanceByUserDate = attendanceRecords
             .GroupBy(a => (a.UserId, Date: a.Date.Date))
             .ToDictionary(g => g.Key, g => g.OrderByDescending(a => a.Id).First());
 
@@ -652,6 +656,7 @@ public class AttendanceService : IAttendanceService
             attendance.Status = request.Status;
         }
         if (request.Notes is not null) attendance.Notes = request.Notes;
+        attendance.Status = NormalizeStatusForCheckIn(attendance.Status, attendance.CheckInTime);
 
         _unitOfWork.Repository<Attendance>().Update(attendance);
         await _unitOfWork.SaveChangesAsync();
@@ -1005,6 +1010,28 @@ public class AttendanceService : IAttendanceService
     private static decimal CalculateRate(int count, int expectedCount)
         => expectedCount <= 0 ? 0 : Math.Round(count * 100m / expectedCount, 2);
 
+    private static bool IsLateCheckIn(DateTime? checkInTime)
+        => checkInTime.HasValue && checkInTime.Value.TimeOfDay > LateCheckInCutoff;
+
+    private static string NormalizeStatusForCheckIn(string? status, DateTime? checkInTime)
+    {
+        var normalizedStatus = string.IsNullOrWhiteSpace(status) ? "Present" : status.Trim();
+        return string.Equals(normalizedStatus, "Present", StringComparison.OrdinalIgnoreCase) && IsLateCheckIn(checkInTime)
+            ? "Late"
+            : normalizedStatus;
+    }
+
+    private static void NormalizeAttendanceStatus(AttendanceDto attendance)
+    {
+        attendance.Status = NormalizeStatusForCheckIn(attendance.Status, attendance.CheckInTime);
+    }
+
+    private static void NormalizeAttendanceStatuses(IEnumerable<AttendanceDto> records)
+    {
+        foreach (var record in records)
+            NormalizeAttendanceStatus(record);
+    }
+
     private static int? GetDataViewLevelId(int? userDataViewLevelId, string? roleName)
     {
         if (userDataViewLevelId.HasValue)
@@ -1106,11 +1133,15 @@ public class AttendanceService : IAttendanceService
     };
 
     private AttendanceDto GetDto(int id)
-        => _unitOfWork.Repository<Attendance>()
+    {
+        var attendance = _unitOfWork.Repository<Attendance>()
             .Query()
             .Where(a => a.Id == id)
             .Select(ProjectToDto)
             .First();
+        NormalizeAttendanceStatus(attendance);
+        return attendance;
+    }
 
     private sealed record AnalyticsPeriodBucket(DateTime Start, DateTime End, string Label);
 

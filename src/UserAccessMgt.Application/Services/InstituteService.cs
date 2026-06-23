@@ -145,6 +145,20 @@ public class InstituteService : IInstituteService
         if (institute is null)
             return ApiResponse<InstituteDto>.Fail("Institute not found", "NOT_FOUND");
 
+        if (request.Code is not null)
+        {
+            if (string.IsNullOrWhiteSpace(request.Code))
+                return ApiResponse<InstituteDto>.Fail("Institute code is required", "INSTITUTE_CODE_REQUIRED");
+
+            var code = request.Code.Trim();
+            var duplicate = await _unitOfWork.Repository<Institute>()
+                .FirstOrDefaultAsync(i => i.Id != id && i.Code == code);
+            if (duplicate is not null)
+                return ApiResponse<InstituteDto>.Fail("Institute code already exists", "CODE_EXISTS");
+
+            institute.Code = code;
+        }
+
         if (request.ThanaId.HasValue)
         {
             if (!await ThanaExistsAsync(request.ThanaId.Value))

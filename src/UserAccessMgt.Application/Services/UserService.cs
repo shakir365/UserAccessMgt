@@ -318,6 +318,20 @@ public class UserService : IUserService
         if (user is null)
             return ApiResponse<UserDto>.Fail("User not found", "NOT_FOUND");
 
+        if (request.LoginID is not null)
+        {
+            var loginId = request.LoginID.Trim();
+            if (string.IsNullOrWhiteSpace(loginId))
+                return ApiResponse<UserDto>.Fail("LoginID is required", "LOGIN_ID_REQUIRED");
+
+            var existingLogin = await _unitOfWork.Repository<User>()
+                .FirstOrDefaultAsync(u => u.Id != id && u.LoginID == loginId);
+            if (existingLogin is not null)
+                return ApiResponse<UserDto>.Fail("LoginID already exists", "LOGIN_ID_EXISTS");
+
+            user.LoginID = loginId;
+        }
+
         if (request.FirstName is not null) user.FirstName = request.FirstName;
         if (request.LastName is not null) user.LastName = request.LastName;
         if (request.MobileNumber is not null)
