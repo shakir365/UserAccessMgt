@@ -61,7 +61,7 @@ public class LeaveController : ControllerBase
             id,
             approverId.Value,
             request,
-            User.IsSuperAdmin());
+            User.IsSuperAdminOrManagement());
         if (result.ErrorCode == "FORBIDDEN")
             return Forbid();
 
@@ -88,7 +88,7 @@ public class LeaveController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _leaveService.GetByIdAsync(id);
@@ -114,12 +114,12 @@ public class LeaveController : ControllerBase
         if (!supervisorUserId.HasValue)
             return Unauthorized();
 
-        var result = await _leaveService.GetPendingForSupervisorAsync(supervisorUserId.Value, User.IsSuperAdmin());
+        var result = await _leaveService.GetPendingForSupervisorAsync(supervisorUserId.Value, User.IsSuperAdminOrManagement());
         return Ok(result);
     }
 
     [HttpGet]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> GetAll()
     {
         var result = await _leaveService.GetAllAsync();

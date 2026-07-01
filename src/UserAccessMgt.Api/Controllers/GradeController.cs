@@ -22,7 +22,7 @@ public class GradeController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateGradeRequest request)
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
             return SuperAdminRequired("create grades");
 
         var result = await _gradeService.CreateAsync(request);
@@ -62,7 +62,7 @@ public class GradeController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateGradeRequest request)
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
             return SuperAdminRequired("update grades");
 
         var result = await _gradeService.UpdateAsync(id, request);
@@ -75,7 +75,7 @@ public class GradeController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
             return SuperAdminRequired("delete grades");
 
         var result = await _gradeService.DeleteAsync(id);
@@ -87,5 +87,5 @@ public class GradeController : ControllerBase
 
     private ObjectResult SuperAdminRequired(string action)
         => StatusCode(StatusCodes.Status403Forbidden,
-            ApiResponse<object>.Fail($"Only SuperAdmin users can {action}.", "SUPER_ADMIN_REQUIRED"));
+            ApiResponse<object>.Fail($"Only SuperAdmin or Management users can {action}.", "SUPER_ADMIN_REQUIRED"));
 }

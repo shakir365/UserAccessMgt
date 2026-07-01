@@ -19,7 +19,7 @@ public class WeekendController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Create([FromBody] CreateWeekendRequest request)
     {
         var result = await _weekendService.CreateAsync(request);
@@ -45,7 +45,7 @@ public class WeekendController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateWeekendRequest request)
     {
         var result = await _weekendService.UpdateAsync(id, request);
@@ -55,7 +55,7 @@ public class WeekendController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _weekendService.DeleteAsync(id);

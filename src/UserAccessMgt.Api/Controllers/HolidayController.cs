@@ -19,7 +19,7 @@ public class HolidayController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Create([FromBody] CreateHolidayRequest request)
     {
         var result = await _holidayService.CreateAsync(request);
@@ -45,7 +45,7 @@ public class HolidayController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateHolidayRequest request)
     {
         var result = await _holidayService.UpdateAsync(id, request);
@@ -55,7 +55,7 @@ public class HolidayController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _holidayService.DeleteAsync(id);

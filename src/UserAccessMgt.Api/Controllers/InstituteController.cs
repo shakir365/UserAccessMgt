@@ -22,7 +22,7 @@ public class InstituteController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateInstituteRequest request)
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
             return SuperAdminRequired("create institutes");
 
         var result = await _instituteService.CreateAsync(request);
@@ -46,7 +46,7 @@ public class InstituteController : ControllerBase
     [HttpGet("code/{code}")]
     public async Task<IActionResult> GetByCode(string code)
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
             return SuperAdminRequired("view institute by code");
 
         var result = await _instituteService.GetByCodeAsync(code);
@@ -58,7 +58,7 @@ public class InstituteController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] int skip = 0, [FromQuery] int take = 10)
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
             return SuperAdminRequired("view all institutes");
 
         var result = await _instituteService.GetPagedAsync(skip, take);
@@ -68,7 +68,7 @@ public class InstituteController : ControllerBase
     [HttpGet("all")]
     public async Task<IActionResult> GetAllInstitutes()
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
             return SuperAdminRequired("view all institutes");
 
         var result = await _instituteService.GetAllAsync();
@@ -78,7 +78,7 @@ public class InstituteController : ControllerBase
     [HttpGet("GetInstituteByRole")]
     public async Task<IActionResult> GetInstituteByRole()
     {
-        var roleName = User.IsSuperAdmin()
+        var roleName = User.IsSuperAdminOrManagement()
             ? CurrentUserExtensions.SuperAdminRole
             : User.IsInstituteAdmin()
                 ? CurrentUserExtensions.InstituteAdminRole
@@ -99,7 +99,7 @@ public class InstituteController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateInstituteRequest request)
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
             return SuperAdminRequired("update institutes");
 
         var result = await _instituteService.UpdateAsync(id, request);
@@ -117,7 +117,7 @@ public class InstituteController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
             return SuperAdminRequired("delete institutes");
 
         var result = await _instituteService.DeleteAsync(id);
@@ -128,5 +128,5 @@ public class InstituteController : ControllerBase
 
     private ObjectResult SuperAdminRequired(string action)
         => StatusCode(StatusCodes.Status403Forbidden,
-            ApiResponse<object>.Fail($"Only SuperAdmin users can {action}.", "SUPER_ADMIN_REQUIRED"));
+            ApiResponse<object>.Fail($"Only SuperAdmin or Management users can {action}.", "SUPER_ADMIN_REQUIRED"));
 }

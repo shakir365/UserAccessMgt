@@ -19,7 +19,7 @@ public class UserTransferController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Transfer([FromBody] CreateTransferRequest request)
     {
         var transferredById = User.GetUserId();
@@ -33,7 +33,7 @@ public class UserTransferController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _userTransferService.GetByIdAsync(id);
@@ -63,7 +63,7 @@ public class UserTransferController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> GetAll()
     {
         var result = await _userTransferService.GetAllAsync();

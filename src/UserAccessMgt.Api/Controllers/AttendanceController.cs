@@ -25,7 +25,7 @@ public class AttendanceController : ControllerBase
         if (!submittedByUserId.HasValue)
             return Unauthorized();
 
-        if (!User.IsSuperAdmin() && !User.IsInstituteAdmin() && request.UserId != submittedByUserId.Value)
+        if (!User.IsSuperAdminOrManagement() && !User.IsInstituteAdmin() && request.UserId != submittedByUserId.Value)
             return Forbid();
 
         if (!User.CanAccessInstitute(request.InstituteId))
@@ -60,7 +60,7 @@ public class AttendanceController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _attendanceService.GetByIdAsync(id);
@@ -80,7 +80,7 @@ public class AttendanceController : ControllerBase
     }
 
     [HttpGet("date/{date}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> GetByDate(DateTime date)
     {
         var result = await _attendanceService.GetByDateAsync(date);
@@ -131,7 +131,7 @@ public class AttendanceController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateAttendanceRequest request)
     {
         var result = await _attendanceService.UpdateAsync(id, request);
@@ -141,7 +141,7 @@ public class AttendanceController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _attendanceService.DeleteAsync(id);

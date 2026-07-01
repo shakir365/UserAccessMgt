@@ -297,6 +297,11 @@ public class LeaveService : ILeaveService
         Id = leave.Id,
         UserId = leave.UserId,
         UserName = leave.User == null ? string.Empty : leave.User.LoginID,
+        UserDisplayName = leave.User == null
+            ? null
+            : ((leave.User.FirstName ?? string.Empty) + " " + (leave.User.LastName ?? string.Empty)).Trim(),
+        UserDesignationName = leave.User == null || leave.User.Designation == null ? null : leave.User.Designation.DesignationNameEN,
+        UserInstituteNameBN = leave.User == null || leave.User.Institute == null ? null : leave.User.Institute.InstituteNameBN,
         LeaveTypeId = leave.LeaveTypeId,
         LeaveType = leave.LeaveType,
         StartDate = leave.StartDate,
@@ -498,7 +503,7 @@ public class LeaveService : ILeaveService
 
         return roleName?.Trim().ToLowerInvariant() switch
         {
-            "superadmin" => AllDivisionLevelId,
+            "superadmin" or "management" => AllDivisionLevelId,
             "divisionaladmin" => OwnDivisionLevelId,
             "districtadmin" or "disrtictadmin" => OwnDistrictLevelId,
             "thanaadmin" => OwnThanaLevelId,

@@ -19,7 +19,7 @@ public class DepartmentController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Create([FromBody] CreateDepartmentRequest request)
     {
         var result = await _departmentService.CreateAsync(request);
@@ -60,7 +60,7 @@ public class DepartmentController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateDepartmentRequest request)
     {
         var result = await _departmentService.UpdateAsync(id, request);
@@ -72,7 +72,7 @@ public class DepartmentController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _departmentService.DeleteAsync(id);

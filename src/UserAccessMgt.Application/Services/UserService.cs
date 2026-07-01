@@ -535,7 +535,7 @@ public class UserService : IUserService
 
         return roleName?.Trim().Replace(" ", string.Empty).ToUpperInvariant() switch
         {
-            "SUPERADMIN" => AllDivisionLevelId,
+            "SUPERADMIN" or "MANAGEMENT" => AllDivisionLevelId,
             "DIVISIONALADMIN" => OwnDivisionLevelId,
             "DISTRICTADMIN" => OwnDistrictLevelId,
             "DISRTICTADMIN" => OwnDistrictLevelId,

@@ -22,7 +22,7 @@ public class DesignationController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateDesignationRequest request)
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
             return SuperAdminRequired("create designations");
 
         var result = await _designationService.CreateAsync(request);
@@ -65,7 +65,7 @@ public class DesignationController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateDesignationRequest request)
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
             return SuperAdminRequired("update designations");
 
         var result = await _designationService.UpdateAsync(id, request);
@@ -79,7 +79,7 @@ public class DesignationController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
             return SuperAdminRequired("delete designations");
 
         var result = await _designationService.DeleteAsync(id);
@@ -92,5 +92,5 @@ public class DesignationController : ControllerBase
 
     private ObjectResult SuperAdminRequired(string action)
         => StatusCode(StatusCodes.Status403Forbidden,
-            ApiResponse<object>.Fail($"Only SuperAdmin users can {action}.", "SUPER_ADMIN_REQUIRED"));
+            ApiResponse<object>.Fail($"Only SuperAdmin or Management users can {action}.", "SUPER_ADMIN_REQUIRED"));
 }

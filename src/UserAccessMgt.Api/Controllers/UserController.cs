@@ -61,10 +61,10 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{loginId}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole + "," + CurrentUserExtensions.InstituteAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.AdminRoles)]
     public async Task<IActionResult> GetByLoginId(string loginId)
     {
-        var result = await _userService.GetByLoginIdAsync(loginId, User.GetInstituteId(), User.IsSuperAdmin());
+        var result = await _userService.GetByLoginIdAsync(loginId, User.GetInstituteId(), User.IsSuperAdminOrManagement());
         if (!result.Success)
         {
             if (result.ErrorCode == "INSTITUTE_ACCESS_DENIED")
@@ -87,7 +87,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("roles")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole + "," + CurrentUserExtensions.InstituteAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.AdminRoles)]
     public async Task<IActionResult> GetRoles()
     {
         var result = await _userService.GetRolesAsync();
@@ -95,7 +95,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("UserSupervisorSet")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> UserSupervisorSet([FromBody] UserSupervisorSetRequest request)
     {
         var result = await _userService.UserSupervisorSetAsync(request, User.GetUserId());
@@ -106,7 +106,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("UserSupervisorSet")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> GetUserSupervisorSet([FromQuery] string LoginID)
     {
         var result = await _userService.GetActiveDirectSupervisorByLoginIdAsync(LoginID);
@@ -122,7 +122,7 @@ public class UserController : ControllerBase
     }
 
     [HttpDelete("UserSupervisorSet/{userId:int}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> DeleteUserSupervisorSet(int userId)
     {
         var result = await _userService.DeleteUserSupervisorSetAsync(userId);
@@ -134,7 +134,7 @@ public class UserController : ControllerBase
 
     private async Task<IActionResult?> ValidateInstituteAdminUserAccessAsync(int id, string action)
     {
-        if (User.IsSuperAdmin())
+        if (User.IsSuperAdminOrManagement())
             return null;
 
         var existingUser = await _userService.GetByIdAsync(id);
@@ -151,10 +151,10 @@ public class UserController : ControllerBase
     }
 
     [HttpPatch("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole + "," + CurrentUserExtensions.InstituteAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.AdminRoles)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateUserRequest request)
     {
-        if (!User.IsSuperAdmin())
+        if (!User.IsSuperAdminOrManagement())
         {
             if (request.InstituteId.HasValue || request.RoleId.HasValue || request.IsActive.HasValue)
                 return StatusCode(StatusCodes.Status403Forbidden,
@@ -199,7 +199,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPatch("{id}/password")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole + "," + CurrentUserExtensions.InstituteAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.AdminRoles)]
     public async Task<IActionResult> ChangeUserPassword(int id, [FromBody] ChangeUserPasswordRequest request)
     {
         var accessResult = await ValidateInstituteAdminUserAccessAsync(id, "change password for");
@@ -219,7 +219,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("{id}/deactivate")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole + "," + CurrentUserExtensions.InstituteAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.AdminRoles)]
     public async Task<IActionResult> Deactivate(int id)
     {
         var accessResult = await ValidateInstituteAdminUserAccessAsync(id, "deactivate");
@@ -233,7 +233,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("{id}/activate")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole + "," + CurrentUserExtensions.InstituteAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.AdminRoles)]
     public async Task<IActionResult> Activate(int id)
     {
         var accessResult = await ValidateInstituteAdminUserAccessAsync(id, "activate");

@@ -19,7 +19,7 @@ public class ShiftController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Create([FromBody] CreateShiftRequest request)
     {
         var result = await _shiftService.CreateAsync(request);
@@ -45,7 +45,7 @@ public class ShiftController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateShiftRequest request)
     {
         var result = await _shiftService.UpdateAsync(id, request);
@@ -55,7 +55,7 @@ public class ShiftController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminOrManagementRoles)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _shiftService.DeleteAsync(id);

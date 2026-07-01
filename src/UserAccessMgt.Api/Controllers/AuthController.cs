@@ -35,13 +35,13 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        if (!User.IsSuperAdmin() && !User.IsInstituteAdmin())
+        if (!User.IsSuperAdminOrManagement() && !User.IsInstituteAdmin())
         {
             return StatusCode(StatusCodes.Status403Forbidden,
                 ApiResponse<object>.Fail("You are not eligible to register", "NOT_ELIGIBLE_TO_REGISTER"));
         }
 
-        var result = await _authService.RegisterAsync(request, User.GetInstituteId(), User.IsSuperAdmin());
+        var result = await _authService.RegisterAsync(request, User.GetInstituteId(), User.IsSuperAdminOrManagement());
 
         if (!result.Success)
         {

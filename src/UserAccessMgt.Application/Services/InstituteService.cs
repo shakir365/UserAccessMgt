@@ -110,7 +110,7 @@ public class InstituteService : IInstituteService
 
     public async Task<ApiResponse<IEnumerable<InstituteDto>>> GetInstituteByRoleAsync(string roleName, int? instituteId)
     {
-        if (roleName == "SuperAdmin")
+        if (roleName is "SuperAdmin" or "Management")
         {
             return await GetAllAsync();
         }
@@ -118,7 +118,7 @@ public class InstituteService : IInstituteService
         if (roleName != "InstituteAdmin")
         {
             return ApiResponse<IEnumerable<InstituteDto>>.Fail(
-                "Only SuperAdmin or InstituteAdmin users can view institutes by role.",
+                "Only SuperAdmin, Management or InstituteAdmin users can view institutes by role.",
                 "ROLE_NOT_ALLOWED");
         }
 

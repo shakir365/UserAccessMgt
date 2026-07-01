@@ -7,6 +7,9 @@ public class LeaveRequestDto
     public int Id { get; set; }
     public int UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
+    public string? UserDisplayName { get; set; }
+    public string? UserDesignationName { get; set; }
+    public string? UserInstituteNameBN { get; set; }
     public int? LeaveTypeId { get; set; }
     public string LeaveType { get; set; } = string.Empty;
     public DateTime StartDate { get; set; }
