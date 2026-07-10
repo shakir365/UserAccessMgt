@@ -42,6 +42,10 @@ public class AppDbContext : DbContext
             entity.Property(e => e.FirstName).HasMaxLength(100);
             entity.Property(e => e.LastName).HasMaxLength(100);
             entity.Property(e => e.MobileNumber).HasMaxLength(11).IsRequired();
+            entity.Property(e => e.Photo).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.Gender).HasMaxLength(20);
+            entity.Property(e => e.DateOfBirth).HasColumnType("date");
+            entity.Property(e => e.NID).HasMaxLength(50);
 
             entity.HasOne(e => e.Institute)
                 .WithMany(i => i.Users)
@@ -74,6 +78,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Address).HasMaxLength(500);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
             entity.Property(e => e.Email).HasMaxLength(255);
+            entity.Property(e => e.StaffFaceDetectionIsRequired).HasDefaultValue(false).IsRequired();
             entity.Property(e => e.LatitudeLongitude).HasMaxLength(100);
         });
 

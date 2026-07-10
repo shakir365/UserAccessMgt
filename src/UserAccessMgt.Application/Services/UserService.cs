@@ -9,6 +9,7 @@ namespace UserAccessMgt.Application.Services;
 
 public class UserService : IUserService
 {
+    private const int MaxPhotoDataUrlLength = 1_500_000;
     private const int AllDivisionLevelId = 1;
     private const int OwnDivisionLevelId = 2;
     private const int OwnDistrictLevelId = 3;
@@ -320,6 +321,41 @@ public class UserService : IUserService
 
         if (request.FirstName is not null) user.FirstName = request.FirstName;
         if (request.LastName is not null) user.LastName = request.LastName;
+        if (request.RemovePhoto)
+        {
+            user.Photo = null;
+        }
+        else if (request.Photo is not null)
+        {
+            var photo = NormalizeOptionalText(request.Photo);
+            if (!IsValidPhotoDataUrl(photo))
+            {
+                return ApiResponse<UserDto>.Fail("Photo must be a PNG, JPG, or WebP image under 1 MB.", "INVALID_PHOTO");
+            }
+
+            user.Photo = photo;
+        }
+        if (request.Gender is not null)
+        {
+            var gender = NormalizeOptionalText(request.Gender);
+            if (gender?.Length > 20)
+            {
+                return ApiResponse<UserDto>.Fail("Gender must be 20 characters or fewer.", "INVALID_GENDER");
+            }
+
+            user.Gender = gender;
+        }
+        if (request.DateOfBirth.HasValue) user.DateOfBirth = request.DateOfBirth.Value.Date;
+        if (request.NID is not null)
+        {
+            var nid = NormalizeOptionalText(request.NID);
+            if (nid?.Length > 50)
+            {
+                return ApiResponse<UserDto>.Fail("NID must be 50 characters or fewer.", "INVALID_NID");
+            }
+
+            user.NID = nid;
+        }
         if (request.MobileNumber is not null)
         {
             var mobileNumber = request.MobileNumber.Trim();
@@ -444,11 +480,16 @@ public class UserService : IUserService
         FirstName = user.FirstName,
         LastName = user.LastName,
         MobileNumber = user.MobileNumber,
+        Photo = user.Photo,
+        Gender = user.Gender,
+        DateOfBirth = user.DateOfBirth,
+        NID = user.NID,
         IsActive = user.IsActive,
         CreatedAt = user.CreatedAt,
         LastLoginAt = user.LastLoginAt,
         InstituteId = user.InstituteId,
         InstituteName = user.Institute == null ? string.Empty : user.Institute.InstituteNameEN,
+        StaffFaceDetectionIsRequired = user.Institute != null && user.Institute.StaffFaceDetectionIsRequired,
         RoleId = user.RoleId,
         RoleName = user.Role == null ? string.Empty : user.Role.Name,
         UserDataViewLevelID = user.Role == null ? null : user.Role.UserDataViewLevelID,
@@ -627,4 +668,21 @@ public class UserService : IUserService
             .Where(u => u.Id == id)
             .Select(MapToDtoExpression)
             .First());
+
+    private static string? NormalizeOptionalText(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static bool IsValidPhotoDataUrl(string? photo)
+    {
+        if (photo is null)
+            return true;
+
+        if (photo.Length > MaxPhotoDataUrlLength)
+            return false;
+
+        return Regex.IsMatch(
+            photo,
+            @"^data:image/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$",
+            RegexOptions.IgnoreCase);
+    }
 }

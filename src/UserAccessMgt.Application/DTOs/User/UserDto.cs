@@ -8,11 +8,16 @@ public class UserDto
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string MobileNumber { get; set; } = string.Empty;
+    public string? Photo { get; set; }
+    public string? Gender { get; set; }
+    public DateTime? DateOfBirth { get; set; }
+    public string? NID { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
     public int InstituteId { get; set; }
     public string InstituteName { get; set; } = string.Empty;
+    public bool StaffFaceDetectionIsRequired { get; set; }
     public int RoleId { get; set; }
     public string RoleName { get; set; } = string.Empty;
     public int? UserDataViewLevelID { get; set; }
@@ -28,6 +33,11 @@ public class UpdateUserRequest
 {
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
+    public string? Photo { get; set; }
+    public bool RemovePhoto { get; set; }
+    public string? Gender { get; set; }
+    public DateTime? DateOfBirth { get; set; }
+    public string? NID { get; set; }
 
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^01[3-9]\d{8}$", ErrorMessage = "MobileNumber must be a valid BD mobile number.")]
     public string? MobileNumber { get; set; }

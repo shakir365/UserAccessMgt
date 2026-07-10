@@ -15,6 +15,10 @@ public class RegisterRequest
 
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
+    public string? Photo { get; set; }
+    public string? Gender { get; set; }
+    public DateTime? DateOfBirth { get; set; }
+    public string? NID { get; set; }
 
     [Required, RegularExpression(@"^01[3-9]\d{8}$", ErrorMessage = "MobileNumber must be a valid BD mobile number.")]
     public string MobileNumber { get; set; } = string.Empty;

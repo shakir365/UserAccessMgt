@@ -11,10 +11,20 @@ public class InstituteDto
     public string? Address { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Email { get; set; }
+    public bool StaffFaceDetectionIsRequired { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public string? LatitudeLongitude { get; set; }
+    public int? ThanaId { get; set; }
+    public string? ThanaNameEN { get; set; }
+    public string? ThanaNameBN { get; set; }
+    public int? DistrictId { get; set; }
+    public string? DistrictNameEN { get; set; }
+    public string? DistrictNameBN { get; set; }
+    public int? DivisionId { get; set; }
+    public string? DivisionNameEN { get; set; }
+    public string? DivisionNameBN { get; set; }
 }
 
 public class PagedInstituteResult
@@ -36,7 +46,9 @@ public class CreateInstituteRequest
     public string? Address { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Email { get; set; }
+    public bool StaffFaceDetectionIsRequired { get; set; } = false;
     public string? LatitudeLongitude { get; set; }
+    public int? ThanaId { get; set; }
 }
 
 public class UpdateInstituteRequest
@@ -46,6 +58,8 @@ public class UpdateInstituteRequest
     public string? Address { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Email { get; set; }
+    public bool? StaffFaceDetectionIsRequired { get; set; }
     public bool? IsActive { get; set; }
     public string? LatitudeLongitude { get; set; }
+    public int? ThanaId { get; set; }
 }

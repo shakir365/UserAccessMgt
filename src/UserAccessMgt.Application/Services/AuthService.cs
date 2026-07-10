@@ -8,6 +8,7 @@ namespace UserAccessMgt.Application.Services;
 
 public class AuthService : IAuthService
 {
+    private const int MaxPhotoDataUrlLength = 1_500_000;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITokenService _tokenService;
     private readonly IPasswordService _passwordService;
@@ -128,9 +129,28 @@ public class AuthService : IAuthService
         var loginId = request.LoginID.Trim();
         var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
         var mobileNumber = request.MobileNumber.Trim();
+        var photo = NormalizeOptionalText(request.Photo);
+        var gender = NormalizeOptionalText(request.Gender);
+        var nid = NormalizeOptionalText(request.NID);
+
         if (!Regex.IsMatch(mobileNumber, @"^01[3-9]\d{8}$"))
         {
             return ApiResponse<TokenResponse>.Fail("MobileNumber must be a valid BD mobile number", "INVALID_MOBILE_NUMBER");
+        }
+
+        if (!IsValidPhotoDataUrl(photo))
+        {
+            return ApiResponse<TokenResponse>.Fail("Photo must be a PNG, JPG, or WebP image under 1 MB.", "INVALID_PHOTO");
+        }
+
+        if (gender?.Length > 20)
+        {
+            return ApiResponse<TokenResponse>.Fail("Gender must be 20 characters or fewer.", "INVALID_GENDER");
+        }
+
+        if (nid?.Length > 50)
+        {
+            return ApiResponse<TokenResponse>.Fail("NID must be 50 characters or fewer.", "INVALID_NID");
         }
 
         var existingUser = await _unitOfWork.Repository<User>()
@@ -190,6 +210,10 @@ public class AuthService : IAuthService
             PasswordHash = _passwordService.HashPassword(request.Password),
             FirstName = request.FirstName,
             LastName = request.LastName,
+            Photo = photo,
+            Gender = gender,
+            DateOfBirth = request.DateOfBirth?.Date,
+            NID = nid,
             MobileNumber = mobileNumber,
             InstituteId = institute.Id,
             RoleId = defaultRole.Id,
@@ -251,5 +275,22 @@ public class AuthService : IAuthService
     {
         user.Role = await _unitOfWork.Repository<Role>().GetByIdAsync(user.RoleId)
             ?? new Role { Id = user.RoleId, Name = "User", UserDataViewLevelID = 6 };
+    }
+
+    private static string? NormalizeOptionalText(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static bool IsValidPhotoDataUrl(string? photo)
+    {
+        if (photo is null)
+            return true;
+
+        if (photo.Length > MaxPhotoDataUrlLength)
+            return false;
+
+        return Regex.IsMatch(
+            photo,
+            @"^data:image/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$",
+            RegexOptions.IgnoreCase);
     }
 }

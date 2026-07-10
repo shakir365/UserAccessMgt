@@ -9,6 +9,10 @@ public class User
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string MobileNumber { get; set; } = string.Empty;
+    public string? Photo { get; set; }
+    public string? Gender { get; set; }
+    public DateTime? DateOfBirth { get; set; }
+    public string? NID { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
