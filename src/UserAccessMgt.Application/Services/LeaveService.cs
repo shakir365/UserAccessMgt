@@ -297,6 +297,13 @@ public class LeaveService : ILeaveService
         Id = leave.Id,
         UserId = leave.UserId,
         UserName = leave.User == null ? string.Empty : leave.User.LoginID,
+        Name = leave.User == null
+            ? string.Empty
+            : ((leave.User.FirstName ?? string.Empty) + " " + (leave.User.LastName ?? string.Empty)).Trim(),
+        Photo = leave.User == null ? null : leave.User.Photo,
+        Designation = leave.User == null || leave.User.Designation == null ? null : leave.User.Designation.DesignationNameEN,
+        InstituteName = leave.User == null || leave.User.Institute == null ? null : leave.User.Institute.InstituteNameEN,
+        InstituteNameBN = leave.User == null || leave.User.Institute == null ? null : leave.User.Institute.InstituteNameBN,
         LeaveTypeId = leave.LeaveTypeId,
         LeaveType = leave.LeaveType,
         StartDate = leave.StartDate,
