@@ -6,6 +6,7 @@ public static class CurrentUserExtensions
 {
     public const string SuperAdminRole = "SuperAdmin";
     public const string InstituteAdminRole = "InstituteAdmin";
+    public const string ManagementRole = "Management";
 
     public static int? GetUserId(this ClaimsPrincipal user)
         => int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId)
@@ -22,6 +23,12 @@ public static class CurrentUserExtensions
 
     public static bool IsInstituteAdmin(this ClaimsPrincipal user)
         => user.IsInRole(InstituteAdminRole);
+
+    public static bool IsManagement(this ClaimsPrincipal user)
+        => user.IsInRole(ManagementRole);
+
+    public static bool CanManageInstitutes(this ClaimsPrincipal user)
+        => user.IsSuperAdmin() || user.IsManagement();
 
     public static bool CanAccessInstitute(this ClaimsPrincipal user, int instituteId)
         => user.IsSuperAdmin() || user.GetInstituteId() == instituteId;

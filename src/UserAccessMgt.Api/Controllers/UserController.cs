@@ -77,9 +77,10 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("institute/{instituteId}")]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole + "," + CurrentUserExtensions.InstituteAdminRole + "," + CurrentUserExtensions.ManagementRole)]
     public async Task<IActionResult> GetAll(int instituteId)
     {
-        if (!User.CanAccessInstitute(instituteId))
+        if (!User.CanManageInstitutes() && !User.CanAccessInstitute(instituteId))
             return Forbid();
 
         var result = await _userService.GetAllAsync(instituteId);
@@ -87,7 +88,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("roles")]
-    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole + "," + CurrentUserExtensions.InstituteAdminRole)]
+    [Authorize(Roles = CurrentUserExtensions.SuperAdminRole + "," + CurrentUserExtensions.InstituteAdminRole + "," + CurrentUserExtensions.ManagementRole)]
     public async Task<IActionResult> GetRoles()
     {
         var result = await _userService.GetRolesAsync();
